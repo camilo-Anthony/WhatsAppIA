@@ -24,11 +24,7 @@ export default function LandingPage() {
         <div className={styles.heroGlow} />
         <div className={styles.heroGlow2} />
         <div className={`container ${styles.heroContent}`}>
-          <Logo class name {
-            constructor(parameters) {
-              
-            }
-          } size={120} />
+          <Logo size={120} />
           <div className={styles.heroBadge}>
             <span className="status-dot status-dot-connected" />
             Plataforma con IA en tiempo real
