@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# whatsapp auth
+.whatsapp_auth/
+
+# build outputs
+build-output.txt
+prisma-output.txt

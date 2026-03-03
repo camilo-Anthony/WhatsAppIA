@@ -1,0 +1,133 @@
+.container {
+    animation: fadeIn 0.4s ease-out;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.title {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-5);
+}
+
+/* Connection Card */
+.connectionCard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.phoneInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.phoneNumber {
+    font-weight: 600;
+    font-size: var(--font-size-lg);
+}
+
+/* QR Section */
+.qrSection {
+    display: flex;
+    justify-content: center;
+}
+
+.qrPlaceholder {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    color: var(--color-text-muted);
+}
+
+.qrPlaceholder p {
+    font-weight: 500;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.qrPlaceholder span {
+    font-size: var(--font-size-xs);
+    text-align: center;
+    padding: 0 var(--space-4);
+}
+
+/* Details */
+.cardDetails {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.detailRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-sm);
+}
+
+.detailRow span:first-child {
+    color: var(--color-text-muted);
+}
+
+.cardActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-16) var(--space-4);
+    gap: var(--space-4);
+}
+
+.emptyIcon {
+    margin-bottom: var(--space-2);
+}
+
+.emptyState h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: 600;
+}
+
+.emptyState p {
+    color: var(--color-text-secondary);
+    max-width: 400px;
+}

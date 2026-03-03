@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum ConnectionMode {
+  QR
+  MANAGED
+  OWN_ACCOUNT
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  PENDING
+  EXPIRED
+}
+
+enum InfoMode {
+  SIMPLE
+  ADVANCED
+}
+
+enum MessageDirection {
+  INCOMING
+  OUTGOING
+}
+
+enum DataSourceType {
+  DATABASE
+  API
+  ENDPOINT
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  company   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  connections   WhatsAppConnection[]
+  assistant     AssistantConfig?
+  infoFields    InfoField[]
+  conversations Conversation[]
+  dataSources   DataSource[]
+
+  @@map("users")
+}
+
+model WhatsAppConnection {
+  id          String           @id @default(cuid())
+  userId      String
+  phoneNumber String?
+  displayName String?
+  mode        ConnectionMode   @default(QR)
+  status      ConnectionStatus @default(PENDING)
+  sessionData Json?
+  lastActive  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId])
+  @@index([phoneNumber])
+  @@map("whatsapp_connections")
+}
+
+model AssistantConfig {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  behaviorPrompt String   @db.Text
+  infoMode       InfoMode @default(SIMPLE)
+  simpleInfo     String?  @db.Text
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("assistant_configs")
+}
+
+model InfoField {
+  id      String @id @default(cuid())
+  userId  String
+  label   String
+  content String @db.Text
+  order   Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("info_fields")
+}
+
+model Conversation {
+  id          String   @id @default(cuid())
+  userId      String
+  clientPhone String
+  clientName  String?
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([userId, clientPhone])
+  @@index([userId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String           @id @default(cuid())
+  conversationId String
+  connectionId   String
+  direction      MessageDirection
+  content        String           @db.Text
+  mediaUrl       String?
+  timestamp      DateTime         @default(now())
+
+  conversation Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  connection   WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([connectionId])
+  @@index([timestamp])
+  @@map("messages")
+}
+
+model DataSource {
+  id       String         @id @default(cuid())
+  userId   String
+  name     String
+  type     DataSourceType
+  config   Json
+  isActive Boolean        @default(true)
+  lastTest DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("data_sources")
+}
