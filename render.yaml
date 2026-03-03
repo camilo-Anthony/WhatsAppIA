@@ -11,6 +11,8 @@ services:
         sync: false
       - key: NEXTAUTH_URL
         sync: false
+      - key: AUTH_TRUST_HOST
+        value: "true"
       - key: NEXTAUTH_SECRET
         generateValue: true
       - key: GROQ_API_KEY
