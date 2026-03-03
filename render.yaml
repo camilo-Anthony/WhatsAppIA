@@ -3,9 +3,9 @@ services:
     name: whatsapp-ia
     runtime: node
     region: oregon
-    plan: starter
+    plan: free
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: node .next/standalone/server.js
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -17,3 +17,7 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: "10000"
+      - key: HOSTNAME
+        value: "0.0.0.0"
