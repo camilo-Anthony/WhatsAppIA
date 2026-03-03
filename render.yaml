@@ -15,8 +15,6 @@ services:
         generateValue: true
       - key: GROQ_API_KEY
         sync: false
-      - key: NODE_ENV
-        value: production
       - key: PORT
         value: "10000"
       - key: HOSTNAME
