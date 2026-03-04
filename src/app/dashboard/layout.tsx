@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
 import { signOut, useSession } from "next-auth/react"
 import Link from "next/link"
 import { SessionProvider } from "next-auth/react"
@@ -69,10 +70,36 @@ const navItems = [
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const { data: session } = useSession()
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+
+    // Close sidebar on route change
+    useEffect(() => {
+        setSidebarOpen(false)
+    }, [pathname])
 
     return (
         <div className={styles.layout}>
-            <aside className={styles.sidebar}>
+            {/* Mobile hamburger */}
+            <button
+                className={styles.menuToggle}
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                aria-label="Toggle menu"
+            >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {sidebarOpen ? (
+                        <path d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                        <path d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                </svg>
+            </button>
+
+            {/* Overlay */}
+            {sidebarOpen && (
+                <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
+            )}
+
+            <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`}>
                 <div className={styles.sidebarHeader}>
                     <Link href="/dashboard" className={styles.sidebarLogo}>
                         <Logo size={32} />

@@ -60,17 +60,7 @@
 }
 
 .heroBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    margin-bottom: var(--space-8);
-    animation: fadeIn 0.6s ease-out;
+    display: none;
 }
 
 .heroTitle {
@@ -97,6 +87,26 @@
     gap: var(--space-4);
     justify-content: center;
     animation: fadeIn 0.6s ease-out 0.3s both;
+}
+
+.heroMeta {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-top: var(--space-4);
+    animation: fadeIn 0.6s ease-out 0.4s both;
+}
+
+.heroLoginLink {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    margin-top: var(--space-3);
+    transition: color var(--transition-fast);
+    animation: fadeIn 0.6s ease-out 0.5s both;
+}
+
+.heroLoginLink:hover {
+    color: var(--color-primary);
 }
 
 /* Features */
@@ -128,6 +138,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    transition: border-color var(--transition-fast), transform 0.2s ease;
+}
+
+.featureCard:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
 }
 
 .featureCard h3 {
@@ -247,6 +263,22 @@
 .footerText {
     font-size: var(--font-size-sm);
     color: var(--color-text-muted);
+}
+
+.footerLinks {
+    display: flex;
+    gap: var(--space-6);
+}
+
+.footerLinks a {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.footerLinks a:hover {
+    color: var(--color-text-primary);
 }
 
 /* Responsive */

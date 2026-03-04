@@ -100,3 +100,17 @@
     font-weight: 700;
     color: white;
 }
+
+@media (max-width: 768px) {
+    .title {
+        font-size: var(--font-size-2xl);
+    }
+
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .actionsGrid {
+        grid-template-columns: 1fr;
+    }
+}
