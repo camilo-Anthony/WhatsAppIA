@@ -162,7 +162,7 @@ export default function LandingPage() {
             <a href="#">Contacto</a>
           </div>
           <span className={styles.footerText}>
-            © 2026 WhatsApp IA
+            © 2026 WhatsApp IA · Desarrollado por Camilo Anthony
           </span>
         </div>
       </footer>
