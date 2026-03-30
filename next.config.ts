@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
     "jimp",
     "sharp",
     "pino",
+    "bullmq",
+    "ioredis",
   ],
 };
 

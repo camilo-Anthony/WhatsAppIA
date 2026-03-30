@@ -5,12 +5,15 @@ import styles from "./landing.module.css"
 export default function LandingPage() {
   return (
     <div className={styles.page}>
+      {/* 3D Fixed Background */}
+      <div className={styles.pageGrid} />
+
       {/* Navbar */}
       <nav className={styles.navbar}>
         <div className={`container ${styles.navContent}`}>
           <Link href="/" className={styles.navLogo}>
             <Logo size={32} />
-            <span>WhatsApp <span className="gradient-text">IA</span></span>
+            <span>WhatsApp <span style={{ color: "var(--color-primary)" }}>IA</span></span>
           </Link>
           <div className={styles.navActions}>
             <Link href="/login" className="btn btn-ghost">Iniciar sesión</Link>
@@ -21,14 +24,12 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className={styles.hero}>
-        <div className={styles.heroGlow} />
-        <div className={styles.heroGlow2} />
         <div className={`container ${styles.heroContent}`}>
           <Logo size={180} />
           <h1 className={styles.heroTitle}>
             Automatiza tu
             <br />
-            <span className="gradient-text">WhatsApp con IA</span>
+            <span style={{ color: "var(--color-primary)" }}>WhatsApp con IA</span>
           </h1>
           <p className={styles.heroSubtitle}>
             Responde automáticamente a tus clientes con inteligencia artificial personalizada.
@@ -36,7 +37,10 @@ export default function LandingPage() {
           </p>
           <div className={styles.heroCTA}>
             <Link href="/register" className="btn btn-primary btn-lg">
-              Comenzar
+              Comenzar gratis
+            </Link>
+            <Link href="#features" className="btn btn-secondary btn-lg">
+              Ver características
             </Link>
           </div>
           <br />
@@ -66,7 +70,7 @@ export default function LandingPage() {
             </div>
 
             <div className={`card ${styles.featureCard}`}>
-              <div className={styles.featureIcon} style={{ background: "rgba(37, 211, 102, 0.08)", color: "#25D366" }}>
+              <div className={styles.featureIcon} style={{ background: "var(--color-primary-light)", color: "var(--color-primary)" }}>
                 <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
                 </svg>
@@ -76,7 +80,7 @@ export default function LandingPage() {
             </div>
 
             <div className={`card ${styles.featureCard}`}>
-              <div className={styles.featureIcon} style={{ background: "rgba(37, 211, 102, 0.08)", color: "#25D366" }}>
+              <div className={styles.featureIcon} style={{ background: "var(--color-primary-light)", color: "var(--color-primary)" }}>
                 <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
                   <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
@@ -89,7 +93,7 @@ export default function LandingPage() {
 
 
             <div className={`card ${styles.featureCard}`}>
-              <div className={styles.featureIcon} style={{ background: "rgba(37, 211, 102, 0.08)", color: "#25D366" }}>
+              <div className={styles.featureIcon} style={{ background: "var(--color-primary-light)", color: "var(--color-primary)" }}>
                 <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                 </svg>
@@ -99,7 +103,7 @@ export default function LandingPage() {
             </div>
 
             <div className={`card ${styles.featureCard}`}>
-              <div className={styles.featureIcon} style={{ background: "rgba(37, 211, 102, 0.08)", color: "#25D366" }}>
+              <div className={styles.featureIcon} style={{ background: "var(--color-primary-light)", color: "var(--color-primary)" }}>
                 <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                 </svg>
@@ -155,7 +159,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className={styles.footer}>
         <div className={`container ${styles.footerContent}`}>
-          <span className={styles.footerLogo}>WhatsApp <span className="gradient-text">IA</span></span>
+          <span className={styles.footerLogo}>WhatsApp <span style={{ color: "var(--color-primary)" }}>IA</span></span>
           <div className={styles.footerLinks}>
             <a href="#">Privacidad</a>
             <a href="#">Términos</a>

@@ -7,7 +7,6 @@ import { Boom } from "@hapi/boom"
 import path from "node:path"
 import fs from "node:fs"
 import { prisma } from "../db"
-import { processIncomingMessage } from "../ai/engine"
 
 export class WhatsAppClient {
     public connectionId: string
@@ -44,7 +43,7 @@ export class WhatsAppClient {
 
             if (qr) {
                 this.qrCode = qr
-                console.log(`[WA] QR generated for connection ${this.connectionId}`)
+                console.log(`[WA] QR generado para conexión ${this.connectionId}`)
             }
 
             if (connection === "close") {
@@ -56,10 +55,10 @@ export class WhatsAppClient {
                 this.qrCode = null
 
                 if (shouldReconnect) {
-                    console.log("[WA] Reconnecting...")
+                    console.log("[WA] Reconectando...")
                     setTimeout(() => this.initialize(), 3000)
                 } else {
-                    console.log("[WA] Logged out. Cleaning up...")
+                    console.log("[WA] Sesión cerrada. Limpiando...")
                     this.cleanupAuthFolder()
                     await prisma.whatsAppConnection.update({
                         where: { id: this.connectionId },
@@ -67,7 +66,7 @@ export class WhatsAppClient {
                     })
                 }
             } else if (connection === "open") {
-                console.log(`[WA] Connection ${this.connectionId} opened successfully`)
+                console.log(`[WA] Conexión ${this.connectionId} abierta exitosamente`)
                 this.status = "CONNECTED"
                 this.qrCode = null
 
@@ -88,27 +87,18 @@ export class WhatsAppClient {
         })
 
         // =========================================
-        // MESSAGE HANDLER — AI Auto-Response
+        // MESSAGE HANDLER — Enqueue to Queue System
         // =========================================
         this.socket.ev.on("messages.upsert", async (m) => {
-            console.log(`[WA DEBUG] messages.upsert fired — type: ${m.type}, count: ${m.messages.length}`)
-
             for (const msg of m.messages) {
-                const jid = msg.key.remoteJid || "unknown"
-                const fromMe = msg.key.fromMe
-                const hasMessage = !!msg.message
-                console.log(`[WA DEBUG] Message — jid: ${jid}, fromMe: ${fromMe}, hasMessage: ${hasMessage}, type: ${m.type}`)
-
                 if (!msg.message || msg.key.fromMe) continue
 
-                // Accept individual chats: @s.whatsapp.net (classic) and @lid (new format)
-                // Reject groups (@g.us) and status broadcasts
                 const remoteJid = msg.key.remoteJid
                 if (!remoteJid) continue
                 const isPersonalChat = remoteJid.endsWith("@s.whatsapp.net") || remoteJid.endsWith("@lid")
                 if (!isPersonalChat) continue
 
-                // Extract text content
+                // Extraer contenido de texto
                 const textContent =
                     msg.message.conversation ||
                     msg.message.extendedTextMessage?.text ||
@@ -116,50 +106,53 @@ export class WhatsAppClient {
                     msg.message.videoMessage?.caption ||
                     null
 
-                if (!textContent) continue // Skip non-text messages (images, stickers, etc.)
+                if (!textContent) continue
 
-                // Prevent duplicate processing
+                // Prevenir procesamiento duplicado
                 const msgId = msg.key.id || `${remoteJid}-${Date.now()}`
                 if (this.processing.has(msgId)) continue
                 this.processing.add(msgId)
 
-                // Extract sender info
+                // Extraer info del remitente
                 const clientPhone = remoteJid.replace("@s.whatsapp.net", "").replace("@lid", "")
                 const clientName = msg.pushName || undefined
 
-                console.log(`[WA] Message from +${clientPhone}: "${textContent}"`)
+                console.log(`[WA] Mensaje de +${clientPhone}: "${textContent}"`)
 
                 try {
-                    // Process with AI engine
-                    const result = await processIncomingMessage({
-                        userId: this.userId,
+                    // Intentar encolar en BullMQ (requiere Redis)
+                    const { incomingQueue } = await import("../queue/incoming")
+                    await incomingQueue.add("incoming-message", {
                         connectionId: this.connectionId,
-                        clientPhone,
-                        clientName,
+                        userId: this.userId,
+                        senderPhone: clientPhone,
+                        senderName: clientName,
                         messageContent: textContent,
+                        messageId: msgId,
+                        source: "baileys" as const,
                     })
 
-                    // Send the AI response back via WhatsApp
-                    await this.socket?.sendMessage(msg.key.remoteJid!, {
-                        text: result.response,
-                    })
-
-                    console.log(`[WA] Response to +${clientPhone}: "${result.response.substring(0, 80)}..." (${result.tokensUsed.total} tokens)`)
-
-                } catch (error: unknown) {
-                    const errorMessage = error instanceof Error ? error.message : "Unknown error"
-
-                    if (errorMessage === "ASSISTANT_NOT_CONFIGURED") {
-                        console.log(`[WA] Assistant not configured for user ${this.userId}`)
-                    } else if (errorMessage === "ASSISTANT_INACTIVE") {
-                        console.log(`[WA] Assistant is inactive for user ${this.userId}`)
-                    } else if (errorMessage === "RATE_LIMITED") {
-                        console.log(`[WA] Rate limited by Groq API`)
-                        await this.socket?.sendMessage(msg.key.remoteJid!, {
-                            text: "Estamos procesando muchas solicitudes en este momento. Por favor intenta de nuevo en unos segundos.",
+                    console.log(`[WA] Mensaje encolado para procesamiento — de: +${clientPhone}`)
+                } catch {
+                    // Fallback: procesar directamente sin Redis/BullMQ
+                    console.log(`[WA] Redis no disponible, procesando directamente — de: +${clientPhone}`)
+                    try {
+                        const { processIncomingMessage } = await import("../ai/engine")
+                        const result = await processIncomingMessage({
+                            userId: this.userId,
+                            connectionId: this.connectionId,
+                            clientPhone,
+                            clientName,
+                            messageContent: textContent,
                         })
-                    } else {
-                        console.error(`[WA] Error processing message:`, error)
+
+                        // Enviar respuesta directamente por el socket
+                        if (result.response && this.socket) {
+                            await this.socket.sendMessage(remoteJid, { text: result.response })
+                            console.log(`[WA] Respuesta enviada a +${clientPhone}: "${result.response.substring(0, 80)}..."`)
+                        }
+                    } catch (directError) {
+                        console.error(`[WA] Error en procesamiento directo:`, directError)
                     }
                 } finally {
                     this.processing.delete(msgId)

@@ -23,7 +23,7 @@
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--space-5);
 }
 
@@ -37,7 +37,8 @@
 .cardHeader {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: start;
+    gap: var(--space-2);
 }
 
 .phoneInfo {
@@ -51,10 +52,54 @@
     font-size: var(--font-size-lg);
 }
 
+.badges {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.modeBadge {
+    display: inline-flex;
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badgeQR {
+    background: rgba(99, 102, 241, 0.15);
+    color: rgb(99, 102, 241);
+}
+
+.badgeOwn {
+    background: rgba(16, 185, 129, 0.15);
+    color: rgb(16, 185, 129);
+}
+
+.badgeManaged {
+    background: rgba(245, 158, 11, 0.15);
+    color: rgb(245, 158, 11);
+}
+
+.monoText {
+    font-family: "SF Mono", "Fira Code", "Fira Mono", monospace;
+    font-size: var(--font-size-xs);
+    opacity: 0.8;
+}
+
 /* QR Section */
 .qrSection {
     display: flex;
     justify-content: center;
+}
+
+.qrCodeWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
 .qrPlaceholder {
@@ -130,4 +175,291 @@
 .emptyState p {
     color: var(--color-text-secondary);
     max-width: 400px;
+}
+
+/* ==========================================
+   MODAL
+   ========================================== */
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: var(--space-4);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.modalHeader h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+}
+
+.modalClose {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease;
+}
+
+.modalClose:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-card-hover);
+}
+
+.modalSubtitle {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-5);
+    font-size: var(--font-size-sm);
+}
+
+/* ==========================================
+   TYPE SELECTOR
+   ========================================== */
+
+.typeGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+    .typeGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.typeCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    color: var(--color-text-secondary);
+}
+
+.typeCard:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-card-hover);
+    transform: translateY(-2px);
+    color: var(--color-text-primary);
+}
+
+.typeIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-lg);
+    background: var(--color-primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+}
+
+.typeCard h3 {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin: 0;
+}
+
+.typeCard p {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.typeDetails {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    margin-top: var(--space-4);
+    margin-bottom: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px dashed var(--color-border);
+    text-align: left;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.detailItem {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    line-height: 1.4;
+}
+
+.detailIconSuccess { color: var(--color-success); font-weight: bold; width: 14px; text-align: center; flex-shrink: 0; }
+.detailIconWarning { color: var(--color-warning); font-weight: bold; width: 14px; text-align: center; flex-shrink: 0; }
+.detailIconError { color: var(--color-error); font-weight: bold; width: 14px; text-align: center; flex-shrink: 0; }
+
+.typeTag {
+    margin-top: auto;
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+/* ==========================================
+   FORM ELEMENTS
+   ========================================== */
+
+.formSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.formDescription {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.formLabel {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    margin-top: var(--space-1);
+}
+
+.formInput {
+    width: 100%;
+    padding: var(--space-3);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    transition: border-color 0.15s ease;
+}
+
+.formInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.formInput::placeholder {
+    color: var(--color-text-muted);
+}
+
+.radioGroup {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.radioLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+}
+
+.radioLabel input[type="radio"] {
+    accent-color: var(--color-primary);
+}
+
+.errorBanner {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: rgb(239, 68, 68);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-2);
+}
+
+/* ==========================================
+   SUCCESS STATE
+   ========================================== */
+
+.successSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-3);
+    padding: var(--space-8) 0;
+}
+
+.successIcon {
+    animation: scaleIn 0.4s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+.successSection h3 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--color-success, #10b981);
+}
+
+.successSection p {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
 }

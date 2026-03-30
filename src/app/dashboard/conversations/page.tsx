@@ -155,25 +155,49 @@ export default function ConversationsPage() {
                             <p>Selecciona una conversación</p>
                             <span>Elige una conversación de la lista para ver los mensajes</span>
                         </div>
-                    ) : loadingMessages ? (
-                        <div className={styles.loadingMessages}>
-                            <span className="spinner" />
-                            <p>Cargando mensajes...</p>
-                        </div>
                     ) : (
-                        <div className={styles.messageList}>
-                            {messages.map((msg) => (
-                                <div
-                                    key={msg.id}
-                                    className={`${styles.message} ${msg.direction === "OUTGOING" ? styles.messageOut : styles.messageIn}`}
-                                >
-                                    <div className={styles.messageBubble}>
-                                        <p>{msg.content}</p>
-                                        <span className={styles.messageTime}>{formatTime(msg.timestamp)}</span>
-                                    </div>
+                        <>
+                            {/* Chat Header */}
+                            <div className={styles.chatHeader}>
+                                <div className={styles.avatar}>
+                                    {(
+                                        conversations.find(c => c.id === selectedId)?.clientName?.[0] || 
+                                        conversations.find(c => c.id === selectedId)?.clientPhone?.[0] || "?"
+                                    ).toUpperCase()}
                                 </div>
-                            ))}
-                        </div>
+                                <div className={styles.chatHeaderInfo}>
+                                    <h3>{conversations.find(c => c.id === selectedId)?.clientName || conversations.find(c => c.id === selectedId)?.clientPhone}</h3>
+                                    <span>{conversations.find(c => c.id === selectedId)?.clientPhone}</span>
+                                </div>
+                            </div>
+                            
+                            {/* Chat Messages */}
+                            {loadingMessages ? (
+                                <div className={styles.loadingMessages}>
+                                    <span className="spinner" />
+                                    <p>Cargando mensajes...</p>
+                                </div>
+                            ) : messages.length === 0 ? (
+                                <div className={styles.emptyMessages}>
+                                    <p>Sin mensajes</p>
+                                    <span>El historial de chat está vacío.</span>
+                                </div>
+                            ) : (
+                                <div className={styles.messageList}>
+                                    {messages.map((msg) => (
+                                        <div
+                                            key={msg.id}
+                                            className={`${styles.message} ${msg.direction === "OUTGOING" ? styles.messageOut : styles.messageIn}`}
+                                        >
+                                            <div className={styles.messageBubble}>
+                                                <p>{msg.content}</p>
+                                                <span className={styles.messageTime}>{formatTime(msg.timestamp)}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

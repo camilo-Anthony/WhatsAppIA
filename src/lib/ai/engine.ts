@@ -45,45 +45,74 @@ export async function processIncomingMessage(
         })
     }
 
-    // 2. Store incoming message
+    // 2. Verify connectionId exists, fallback to user's active connection
+    let validConnectionId = connectionId
+    const connectionExists = await prisma.whatsAppConnection.findUnique({
+        where: { id: connectionId },
+        select: { id: true },
+    })
+
+    if (!connectionExists) {
+        const fallback = await prisma.whatsAppConnection.findFirst({
+            where: { userId, status: "CONNECTED" },
+            select: { id: true },
+        })
+        if (fallback) {
+            validConnectionId = fallback.id
+        } else {
+            // Use any connection for this user
+            const anyConn = await prisma.whatsAppConnection.findFirst({
+                where: { userId },
+                select: { id: true },
+            })
+            if (anyConn) {
+                validConnectionId = anyConn.id
+            } else {
+                console.error(`[Engine] No connection found for user ${userId}`)
+                throw new Error("NO_CONNECTION")
+            }
+        }
+    }
+
+    // 3. Store incoming message
     await prisma.message.create({
         data: {
             conversationId: conversation.id,
-            connectionId,
+            connectionId: validConnectionId,
             direction: "INCOMING",
             content: messageContent,
         },
     })
 
-    // 3. Build AI context
-    const contextMessages = await buildContext({
+    // 3. Process message using the Agent Loop (supports tool calling)
+    const { agentLoop } = await import("./agent-loop")
+    const result = await agentLoop({
         userId,
+        connectionId: validConnectionId,
+        conversationId: conversation.id,
         clientPhone,
-        incomingMessage: messageContent,
+        messageContent,
     })
 
-    // 4. Generate AI response
-    const aiResponse = await generateResponse(contextMessages)
-
-    // 5. Store outgoing message
+    // 4. Store outgoing message
     await prisma.message.create({
         data: {
             conversationId: conversation.id,
-            connectionId,
+            connectionId: validConnectionId,
             direction: "OUTGOING",
-            content: aiResponse.content,
+            content: result.response,
         },
     })
 
-    // 6. Update conversation timestamp
+    // 5. Update conversation timestamp
     await prisma.conversation.update({
         where: { id: conversation.id },
         data: { updatedAt: new Date() },
     })
 
     return {
-        response: aiResponse.content,
+        response: result.response,
         conversationId: conversation.id,
-        tokensUsed: aiResponse.tokensUsed,
+        tokensUsed: result.tokensUsed,
     }
 }

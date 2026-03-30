@@ -43,12 +43,24 @@
     overflow: hidden;
 }
 
-.heroGlow {
-    display: none;
-}
-
-.heroGlow2 {
-    display: none;
+.pageGrid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100dvh;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: center bottom;
+    transform: perspective(600px) rotateX(60deg) scale(2) translateY(50px);
+    transform-origin: center bottom;
+    opacity: 1;
+    z-index: 0;
+    pointer-events: none;
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
 }
 
 .heroContent {
@@ -129,21 +141,25 @@
 }
 
 .featureGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: var(--space-5);
 }
 
 .featureCard {
+    flex: 1 1 300px;
+    max-width: 400px;
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    transition: border-color var(--transition-fast), transform 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .featureCard:hover {
+    background: var(--color-bg-card-hover);
     border-color: var(--color-primary);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
 }
 
 .featureCard h3 {

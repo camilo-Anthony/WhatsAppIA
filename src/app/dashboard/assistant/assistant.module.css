@@ -133,12 +133,24 @@
     padding: var(--space-4);
     cursor: pointer;
     text-align: center;
-    border: 2px solid transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+}
+
+.templateCard:hover:not(.templateActive) {
+    border-color: var(--color-border-hover);
+    transform: translateY(-2px);
+    background: var(--color-bg-card-hover);
+    color: var(--color-text-primary);
 }
 
 .templateActive {
     border-color: var(--color-primary);
     background: var(--color-primary-light);
+    color: var(--color-text-primary);
 }
 
 .templateName {

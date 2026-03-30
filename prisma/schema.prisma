@@ -21,6 +21,9 @@ enum ConnectionStatus {
   DISCONNECTED
   PENDING
   EXPIRED
+  REQUIRES_RECONNECTION
+  TOKEN_EXPIRED
+  ERROR
 }
 
 enum InfoMode {
@@ -37,6 +40,32 @@ enum DataSourceType {
   DATABASE
   API
   ENDPOINT
+}
+
+enum IntegrationType {
+  CALENDAR
+  CRM
+  PAYMENTS
+  STORAGE
+  KNOWLEDGE
+  ECOMMERCE
+  TICKETS
+  NOTIFICATIONS
+  AUTOMATION
+}
+
+enum IntegrationProvider {
+  GOOGLE_CALENDAR
+  GOOGLE_SHEETS
+  GOOGLE_DRIVE
+  NOTION
+  HUBSPOT
+  SLACK
+  SHOPIFY
+  WOOCOMMERCE
+  ZENDESK
+  ZAPIER
+  MAKE
 }
 
 // ==========================================
@@ -58,21 +87,29 @@ model User {
   infoFields    InfoField[]
   conversations Conversation[]
   dataSources   DataSource[]
+  integrations  Integration[]
 
   @@map("users")
 }
 
 model WhatsAppConnection {
-  id          String           @id @default(cuid())
-  userId      String
-  phoneNumber String?
-  displayName String?
-  mode        ConnectionMode   @default(QR)
-  status      ConnectionStatus @default(PENDING)
-  sessionData Json?
-  lastActive  DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id              String           @id @default(cuid())
+  userId          String
+  phoneNumber     String?
+  displayName     String?
+  mode            ConnectionMode   @default(QR)
+  status          ConnectionStatus @default(PENDING)
+  sessionData     Json?
+  lastActive      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Cloud API fields
+  wabaId          String?          // WhatsApp Business Account ID
+  waPhoneNumberId String?          // Cloud API phone number ID
+  accessToken     String?   @db.Text // Long-lived token (OWN_ACCOUNT)
+  tokenExpiresAt  DateTime?        // When the access token expires
+  webhookSecret   String?          // Per-connection webhook verification
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages Message[]
@@ -160,4 +197,84 @@ model DataSource {
 
   @@index([userId])
   @@map("data_sources")
+}
+
+model QueueJob {
+  id           String    @id @default(cuid())
+  queue        String    // "incoming" | "ai_processing" | "outgoing"
+  connectionId String
+  payload      Json
+  status       String    @default("pending") // pending | processing | completed | failed
+  attempts     Int       @default(0)
+  error        String?   @db.Text
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  @@index([queue, status])
+  @@index([connectionId])
+  @@map("queue_jobs")
+}
+
+// ==========================================
+// INTEGRATIONS (MCP)
+// ==========================================
+
+model Integration {
+  id            String              @id @default(cuid())
+  userId        String
+  type          IntegrationType
+  provider      IntegrationProvider
+  isActive      Boolean             @default(true)
+  enabledTools  Json?               // ["check_availability", "create_event", ...]
+  allowedScopes Json?               // ["calendar.read", "calendar.write", ...]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accounts IntegrationAccount[]
+  toolLogs ToolExecution[]
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("integrations")
+}
+
+model IntegrationAccount {
+  id            String      @id @default(cuid())
+  integrationId String
+  label         String      // "Calendar Empresa", "Calendar Personal"
+  credentials   Json        // { accessToken, refreshToken, ... }
+  config        Json?       // { calendarId, ... }
+  isDefault     Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  integration Integration   @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  toolLogs    ToolExecution[]
+
+  @@index([integrationId])
+  @@map("integration_accounts")
+}
+
+model ToolExecution {
+  id              String    @id @default(cuid())
+  integrationId   String
+  accountId       String?
+  conversationId  String?
+  toolName        String
+  input           Json
+  output          Json?
+  status          String    @default("pending") // pending | running | completed | failed | timeout
+  attempt         Int       @default(1)
+  durationMs      Int?
+  error           String?   @db.Text
+  createdAt       DateTime  @default(now())
+
+  integration Integration        @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  account     IntegrationAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([integrationId])
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("tool_executions")
 }
