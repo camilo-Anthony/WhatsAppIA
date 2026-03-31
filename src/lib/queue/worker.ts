@@ -1,11 +1,12 @@
 /**
  * Queue Worker Orchestrator
- * Inicializa todos los workers de cola al arrancar la aplicación.
+ * Inicializa todos los workers de cola + retry cron al arrancar.
  */
 
 import { startIncomingWorker } from "./incoming"
 import { startAIProcessingWorker } from "./ai-processing"
 import { startOutgoingWorker } from "./outgoing"
+import { startRetryCron } from "./retry-cron"
 
 const globalForQueues = globalThis as unknown as {
     queuesInitialized: boolean | undefined
@@ -27,9 +28,10 @@ export function initializeQueueWorkers() {
         startIncomingWorker()
         startAIProcessingWorker()
         startOutgoingWorker()
+        startRetryCron(30_000) // Retry cada 30 segundos
 
         globalForQueues.queuesInitialized = true
-        console.log("[Colas] Todos los workers iniciados correctamente")
+        console.log("[Colas] Todos los workers + retry cron iniciados correctamente")
     } catch (error) {
         console.error("[Colas] Error inicializando workers:", error)
         globalForQueues.queuesInitialized = false

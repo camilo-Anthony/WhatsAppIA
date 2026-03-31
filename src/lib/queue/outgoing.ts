@@ -28,7 +28,7 @@ let _outgoingQueue: Queue<OutgoingMessageJob> | null = null
 
 export function getOutgoingQueue(): Queue<OutgoingMessageJob> {
     if (!_outgoingQueue) {
-        _outgoingQueue = new Queue<OutgoingMessageJob>("whatsapp:outgoing", {
+        _outgoingQueue = new Queue<OutgoingMessageJob>("whatsapp-outgoing", {
             connection: getRedisConfig(),
             defaultJobOptions: {
                 removeOnComplete: { count: 200 },
@@ -139,7 +139,7 @@ export function startOutgoingWorker() {
     if (outgoingWorker) return outgoingWorker
 
     outgoingWorker = new Worker<OutgoingMessageJob>(
-        "whatsapp:outgoing",
+        "whatsapp-outgoing",
         processOutgoingJob,
         { connection: getRedisConfig(), concurrency: 5 }
     )

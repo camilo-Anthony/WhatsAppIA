@@ -171,6 +171,7 @@ model Message {
   direction      MessageDirection
   content        String           @db.Text
   mediaUrl       String?
+  externalId     String?          // ID original del mensaje (WhatsApp msg ID)
   timestamp      DateTime         @default(now())
 
   conversation Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -179,6 +180,7 @@ model Message {
   @@index([conversationId])
   @@index([connectionId])
   @@index([timestamp])
+  @@index([externalId])
   @@map("messages")
 }
 
@@ -206,11 +208,15 @@ model QueueJob {
   payload      Json
   status       String    @default("pending") // pending | processing | completed | failed
   attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
   error        String?   @db.Text
+  lastError    String?   @db.Text
+  nextRetryAt  DateTime  @default(now())
   createdAt    DateTime  @default(now())
   completedAt  DateTime?
 
   @@index([queue, status])
+  @@index([queue, status, nextRetryAt])
   @@index([connectionId])
   @@map("queue_jobs")
 }
@@ -277,4 +283,46 @@ model ToolExecution {
   @@index([conversationId])
   @@index([createdAt])
   @@map("tool_executions")
+}
+
+// ==========================================
+// AGENT MEMORY & OBSERVABILITY
+// ==========================================
+
+model AgentMemory {
+  id        String   @id @default(cuid())
+  userId    String
+  phone     String?  // null = global, set = per-client
+  key       String
+  value     String   @db.Text
+  category  String   @default("general") // preference | fact | instruction
+  score     Float    @default(1.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, phone, key])
+  @@index([userId, phone])
+  @@index([userId, phone, score])
+  @@map("agent_memories")
+}
+
+model AgentRun {
+  id              String   @id @default(cuid())
+  userId          String
+  conversationId  String
+  messageContent  String   @db.Text
+  response        String   @db.Text
+  iterations      Int
+  totalTokens     Int
+  totalDurationMs Int
+  toolsUsed       Json?    // ["google_calendar__create_event"]
+  steps           Json?    // Array of step objects
+  status          String   @default("completed") // completed | error | timeout
+  error           String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("agent_runs")
 }

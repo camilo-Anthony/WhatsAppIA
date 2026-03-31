@@ -175,7 +175,7 @@ export default function AssistantPage() {
                                 Guardando...
                             </>
                         ) : saved ? (
-                            "✓ Guardado"
+                            " Guardado"
                         ) : (
                             "Guardar cambios"
                         )}
@@ -288,7 +288,7 @@ export default function AssistantPage() {
                                                 onClick={() => removeField(index)}
                                                 title="Eliminar campo"
                                             >
-                                                ✕
+                                                
                                             </button>
                                         </div>
                                         <textarea

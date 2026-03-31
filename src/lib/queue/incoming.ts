@@ -19,6 +19,7 @@ export interface IncomingMessageJob {
     messageContent: string
     messageId: string
     source: "baileys" | "cloud_api"
+    remoteJid?: string
 }
 
 // ==========================================
@@ -29,7 +30,7 @@ let _incomingQueue: Queue<IncomingMessageJob> | null = null
 
 export function getIncomingQueue(): Queue<IncomingMessageJob> {
     if (!_incomingQueue) {
-        _incomingQueue = new Queue<IncomingMessageJob>("whatsapp:incoming", {
+        _incomingQueue = new Queue<IncomingMessageJob>("whatsapp-incoming", {
             connection: getRedisConfig(),
             defaultJobOptions: {
                 removeOnComplete: { count: 100 },
@@ -50,7 +51,7 @@ export const incomingQueue = { add: (...args: Parameters<Queue<IncomingMessageJo
 // ==========================================
 
 async function processIncomingJob(job: Job<IncomingMessageJob>) {
-    const { connectionId, userId, senderPhone, senderName, messageContent } = job.data
+    const { connectionId, userId, senderPhone, senderName, messageContent, remoteJid } = job.data
 
     console.log(`[Cola:Entrante] Procesando mensaje de +${senderPhone}`)
 
@@ -86,6 +87,7 @@ async function processIncomingJob(job: Job<IncomingMessageJob>) {
         conversationId: conversation.id,
         clientPhone: senderPhone,
         messageContent,
+        remoteJid,
     })
 
     console.log(`[Cola:Entrante] Mensaje guardado y encolado para IA — conversación: ${conversation.id}`)
@@ -101,7 +103,7 @@ export function startIncomingWorker() {
     if (incomingWorker) return incomingWorker
 
     incomingWorker = new Worker<IncomingMessageJob>(
-        "whatsapp:incoming",
+        "whatsapp-incoming",
         processIncomingJob,
         { connection: getRedisConfig(), concurrency: 10 }
     )

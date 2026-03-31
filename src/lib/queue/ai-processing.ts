@@ -12,6 +12,7 @@ export interface AIProcessingJob {
     conversationId: string
     clientPhone: string
     messageContent: string
+    remoteJid?: string
 }
 
 // ==========================================
@@ -22,7 +23,7 @@ let _aiQueue: Queue<AIProcessingJob> | null = null
 
 export function getAIProcessingQueue(): Queue<AIProcessingJob> {
     if (!_aiQueue) {
-        _aiQueue = new Queue<AIProcessingJob>("whatsapp:ai-processing", {
+        _aiQueue = new Queue<AIProcessingJob>("whatsapp-ai-processing", {
             connection: getRedisConfig(),
             defaultJobOptions: {
                 removeOnComplete: { count: 100 },
@@ -42,7 +43,7 @@ export const aiProcessingQueue = { add: (...args: Parameters<Queue<AIProcessingJ
 // ==========================================
 
 async function processAIJob(job: Job<AIProcessingJob>) {
-    const { userId, connectionId, conversationId, clientPhone, messageContent } = job.data
+    const { userId, connectionId, conversationId, clientPhone, messageContent, remoteJid } = job.data
 
     console.log(`[Cola:IA] Procesando solicitud IA para +${clientPhone}`)
 
@@ -74,7 +75,7 @@ async function processAIJob(job: Job<AIProcessingJob>) {
 
         const { getOutgoingQueue } = await import("./outgoing")
         const outQueue = getOutgoingQueue()
-        const recipientJid = `${clientPhone}@s.whatsapp.net`
+        const recipientJid = remoteJid || `${clientPhone}@s.whatsapp.net`
 
         await outQueue.add("send-message", {
             connectionId,
@@ -105,10 +106,10 @@ async function processAIJob(job: Job<AIProcessingJob>) {
             console.log(`[Cola:IA] Rate limit de Groq API`)
             const { getOutgoingQueue } = await import("./outgoing")
             const outQueue = getOutgoingQueue()
-            const recipientJid = `${clientPhone}@s.whatsapp.net`
+            const recipientJidRateLimit = remoteJid || `${clientPhone}@s.whatsapp.net`
             await outQueue.add("send-message", {
                 connectionId,
-                recipientJid,
+                recipientJid: recipientJidRateLimit,
                 recipientPhone: clientPhone,
                 text: "Estamos procesando muchas solicitudes en este momento. Por favor intenta de nuevo en unos segundos.",
                 conversationId,
@@ -131,7 +132,7 @@ export function startAIProcessingWorker() {
     if (aiWorker) return aiWorker
 
     aiWorker = new Worker<AIProcessingJob>(
-        "whatsapp:ai-processing",
+        "whatsapp-ai-processing",
         processAIJob,
         { connection: getRedisConfig(), concurrency: 5 }
     )

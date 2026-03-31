@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db"
 import type { AIMessage } from "@/lib/ai/providers/groq"
+import { getMemories } from "@/lib/agent-memory"
 
 interface ContextOptions {
     userId: string
@@ -61,6 +62,15 @@ export async function buildContext(options: ContextOptions): Promise<AIMessage[]
 
     if (knowledgeBase.trim()) {
         systemPrompt += `\n\n---\n\n# INFORMACIÓN DISPONIBLE\nUsa ÚNICAMENTE la siguiente información para responder. Si la pregunta no puede ser respondida con esta información, indícalo amablemente.\n\n${knowledgeBase}`
+    }
+
+    // Load agent memory for this client
+    const memories = await getMemories({ userId, phone: clientPhone })
+    if (memories.length > 0) {
+        systemPrompt += `\n\n---\n\n# NOTAS SOBRE ESTE CLIENTE`
+        for (const m of memories) {
+            systemPrompt += `\n- ${m.key}: ${m.value}`
+        }
     }
 
     const today = new Date()

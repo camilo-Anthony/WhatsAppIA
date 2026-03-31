@@ -1,0 +1,110 @@
+﻿[dotenv@17.3.1] injecting env (14) from .env -- tip: ÔÜÖ´©Å  write to custom object with { processEnv: myObject }
+node.exe : Loaded Prisma config 
+from prisma.config.ts.
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo          : N 
+   otSpecified: (Loaded Prisma  
+   c...isma.config.ts.:String   
+ ) [], RemoteException
+    + FullyQualifiedErrorId : N 
+   ativeCommandError
+ 
+
+Prisma schema loaded from 
+prisma\schema.prisma.
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-super-bird-a8a73piz-pooler.eastus2.azure.neon.tech"
+
+Drift detected: Your database schema is not in sync with your migration history.
+
+The following is a summary of the differences between the expected database schema given your migrations files, and the actual schema of the database.
+
+It should be understood as the set of changes to get from the expected schema to the actual schema.
+
+If you are running this the first time on an existing database, please make sure to read this documentation page:
+https://www.prisma.io/docs/guides/database/developing-with-prisma-migrate/troubleshooting-development
+
+[+] Added enums
+  - ConnectionMode
+  - ConnectionStatus
+  - DataSourceType
+  - InfoMode
+  - IntegrationProvider
+  - IntegrationType
+  - MessageDirection
+
+[+] Added tables
+  - assistant_configs
+  - conversations
+  - data_sources
+  - info_fields
+  - integration_accounts
+  - integrations
+  - messages
+  - queue_jobs
+  - tool_executions
+  - users
+  - whatsapp_connections
+
+[*] Changed the `assistant_configs` table
+  [+] Added unique index on columns (userId)
+  [+] Added foreign key on columns (userId)
+
+[*] Changed the `conversations` table
+  [+] Added unique index on columns (userId, clientPhone)
+  [+] Added index on columns (userId)
+  [+] Added foreign key on columns (userId)
+
+[*] Changed the `data_sources` table
+  [+] Added index on columns (userId)
+  [+] Added foreign key on columns (userId)
+
+[*] Changed the `info_fields` table
+  [+] Added index on columns (userId)
+  [+] Added foreign key on columns (userId)
+
+[*] Changed the `integration_accounts` table
+  [+] Added index on columns (integrationId)
+  [+] Added foreign key on columns (integrationId)
+
+[*] Changed the `integrations` table
+  [+] Added index on columns (userId)
+  [+] Added unique index on columns (userId, provider)
+  [+] Added foreign key on columns (userId)
+
+[*] Changed the `messages` table
+  [+] Added index on columns (connectionId)
+  [+] Added index on columns (conversationId)
+  [+] Added index on columns (timestamp)
+  [+] Added foreign key on columns (connectionId)
+  [+] Added foreign key on columns (conversationId)
+
+[*] Changed the `queue_jobs` table
+  [+] Added index on columns (connectionId)
+  [+] Added index on columns (queue, status)
+
+[*] Changed the `tool_executions` table
+  [+] Added index on columns (conversationId)
+  [+] Added index on columns (createdAt)
+  [+] Added index on columns (integrationId)
+  [+] Added foreign key on columns (accountId)
+  [+] Added foreign key on columns (integrationId)
+
+[*] Changed the `users` table
+  [+] Added unique index on columns (email)
+
+[*] Changed the `whatsapp_connections` table
+  [+] Added index on columns (phoneNumber)
+  [+] Added index on columns (userId)
+  [+] Added foreign key on columns (userId)
+
+We need to reset the "public" schema at "ep-super-bird-a8a73piz-pooler.eastus2.azure.neon.tech"
+
+You may use prisma migrate reset to drop the development database.
+All data will be lost.

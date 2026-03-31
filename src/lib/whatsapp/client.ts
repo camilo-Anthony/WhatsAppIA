@@ -1,3 +1,12 @@
+/**
+ * WhatsApp Client — SOLO conexión socket Baileys.
+ * 
+ * Responsabilidad ÚNICA: gestionar el socket, QR, auth y reconexión.
+ * NO parsea mensajes (→ listener.ts)
+ * NO encola ni deduplica (→ dispatcher.ts)
+ * NO procesa IA nunca.
+ */
+
 import makeWASocket, {
     useMultiFileAuthState,
     DisconnectReason,
@@ -7,6 +16,8 @@ import { Boom } from "@hapi/boom"
 import path from "node:path"
 import fs from "node:fs"
 import { prisma } from "../db"
+import { handleBaileysMessage } from "./listener"
+import { dispatch } from "./dispatcher"
 
 export class WhatsAppClient {
     public connectionId: string
@@ -16,7 +27,6 @@ export class WhatsAppClient {
 
     private socket: ReturnType<typeof makeWASocket> | null = null
     private authFolder: string
-    private processing: Set<string> = new Set() // Prevent duplicate processing
 
     constructor(connectionId: string, userId: string) {
         this.connectionId = connectionId
@@ -38,6 +48,9 @@ export class WhatsAppClient {
 
         this.socket.ev.on("creds.update", saveCreds)
 
+        // =========================================
+        // CONNECTION HANDLER
+        // =========================================
         this.socket.ev.on("connection.update", async (update) => {
             const { connection, lastDisconnect, qr } = update
 
@@ -87,75 +100,19 @@ export class WhatsAppClient {
         })
 
         // =========================================
-        // MESSAGE HANDLER — Enqueue to Queue System
+        // MESSAGE HANDLER — Delega a listener + dispatcher
         // =========================================
-        this.socket.ev.on("messages.upsert", async (m) => {
-            for (const msg of m.messages) {
-                if (!msg.message || msg.key.fromMe) continue
-
-                const remoteJid = msg.key.remoteJid
-                if (!remoteJid) continue
-                const isPersonalChat = remoteJid.endsWith("@s.whatsapp.net") || remoteJid.endsWith("@lid")
-                if (!isPersonalChat) continue
-
-                // Extraer contenido de texto
-                const textContent =
-                    msg.message.conversation ||
-                    msg.message.extendedTextMessage?.text ||
-                    msg.message.imageMessage?.caption ||
-                    msg.message.videoMessage?.caption ||
-                    null
-
-                if (!textContent) continue
-
-                // Prevenir procesamiento duplicado
-                const msgId = msg.key.id || `${remoteJid}-${Date.now()}`
-                if (this.processing.has(msgId)) continue
-                this.processing.add(msgId)
-
-                // Extraer info del remitente
-                const clientPhone = remoteJid.replace("@s.whatsapp.net", "").replace("@lid", "")
-                const clientName = msg.pushName || undefined
-
-                console.log(`[WA] Mensaje de +${clientPhone}: "${textContent}"`)
-
-                try {
-                    // Intentar encolar en BullMQ (requiere Redis)
-                    const { incomingQueue } = await import("../queue/incoming")
-                    await incomingQueue.add("incoming-message", {
-                        connectionId: this.connectionId,
-                        userId: this.userId,
-                        senderPhone: clientPhone,
-                        senderName: clientName,
-                        messageContent: textContent,
-                        messageId: msgId,
-                        source: "baileys" as const,
+        this.socket.ev.on("messages.upsert", (m) => {
+            for (const rawMsg of m.messages) {
+                const normalized = handleBaileysMessage(
+                    rawMsg,
+                    this.connectionId,
+                    this.userId
+                )
+                if (normalized) {
+                    dispatch(normalized).catch((err) => {
+                        console.error(`[WA] Error en dispatch:`, err)
                     })
-
-                    console.log(`[WA] Mensaje encolado para procesamiento — de: +${clientPhone}`)
-                } catch {
-                    // Fallback: procesar directamente sin Redis/BullMQ
-                    console.log(`[WA] Redis no disponible, procesando directamente — de: +${clientPhone}`)
-                    try {
-                        const { processIncomingMessage } = await import("../ai/engine")
-                        const result = await processIncomingMessage({
-                            userId: this.userId,
-                            connectionId: this.connectionId,
-                            clientPhone,
-                            clientName,
-                            messageContent: textContent,
-                        })
-
-                        // Enviar respuesta directamente por el socket
-                        if (result.response && this.socket) {
-                            await this.socket.sendMessage(remoteJid, { text: result.response })
-                            console.log(`[WA] Respuesta enviada a +${clientPhone}: "${result.response.substring(0, 80)}..."`)
-                        }
-                    } catch (directError) {
-                        console.error(`[WA] Error en procesamiento directo:`, directError)
-                    }
-                } finally {
-                    this.processing.delete(msgId)
                 }
             }
         })
@@ -163,7 +120,23 @@ export class WhatsAppClient {
 
     public async sendMessage(jid: string, text: string) {
         if (!this.socket) throw new Error("Socket not initialized")
-        await this.socket.sendMessage(jid, { text })
+        console.log(`[WA] Intentando enviar a JID exacto: "${jid}"`)
+        try {
+            // Añadimos simulación de "escribiendo..." para calentar el socket
+            await this.socket.sendPresenceUpdate("composing", jid)
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+            await this.socket.sendPresenceUpdate("paused", jid)
+
+            const result = await this.socket.sendMessage(jid, { text })
+            
+            // Logueamos solo un resumen de llaves para no inundar si es string largo
+            console.log(`[WA] Envío completado. MessageId: ${result?.key?.id}, status: ${result?.status}`)
+            
+            return result
+        } catch (error) {
+            console.error(`[WA] Error crítico en socket.sendMessage:`, error)
+            throw error
+        }
     }
 
     public async logout() {
@@ -180,4 +153,3 @@ export class WhatsAppClient {
         }
     }
 }
-

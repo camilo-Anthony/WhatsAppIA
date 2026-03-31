@@ -253,8 +253,8 @@ function ConnectionTypeSelector({
                         <h3>Código QR (Web)</h3>
                         <p>Simula WhatsApp Web escaneando el QR con tu propio celular.</p>
                         <div className={styles.typeDetails}>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}>✓</span> Instantáneo y gratis</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}>✓</span> Usa tu número actual (app)</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Instantáneo y gratis</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Usa tu número actual (app)</div>
                             <div className={styles.detailItem}><span className={styles.detailIconError}>!</span> Riesgo de bloqueo si hay spam masivo</div>
                             <div className={styles.detailItem}><span className={styles.detailIconError}>!</span> Tu celular debe tener internet</div>
                         </div>
@@ -272,10 +272,10 @@ function ConnectionTypeSelector({
                         <h3>API Oficial (Tu cuenta)</h3>
                         <p>Únete mediante Meta Developers en tu Business Manager y conecta tu cuenta WABA.</p>
                         <div className={styles.typeDetails}>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}>✓</span> 100% oficial y antibloqueo</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}>✓</span> Conservas control total de la cuenta</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconWarning}>⚙</span> Requiere verificar negocio en Meta</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconWarning}>⚙</span> Meta cobra costos por conversación</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> 100% oficial y antibloqueo</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Conservas control total de la cuenta</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> Requiere verificar negocio en Meta</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> Meta cobra costos por conversación</div>
                         </div>
                         <span className={styles.typeTag}>Negocios 100% Seguros</span>
                     </button>
@@ -292,9 +292,9 @@ function ConnectionTypeSelector({
                         <h3>Cloud API (Integrada)</h3>
                         <p>Registras un nuevo número directamente en nuestra plataforma por SMS o llamada.</p>
                         <div className={styles.typeDetails}>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}>✓</span> Oficial, sin riesgos de bloqueo</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}>✓</span> Más fácil que configurar cuentas de Meta</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconWarning}>⚙</span> No se puede usar la App (solo API)</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Oficial, sin riesgos de bloqueo</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Más fácil que configurar cuentas de Meta</div>
+                            <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> No se puede usar la App (solo API)</div>
                         </div>
                         <span className={styles.typeTag}>Administrado por nosotros</span>
                     </button>
