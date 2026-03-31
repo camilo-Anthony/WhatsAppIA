@@ -161,7 +161,7 @@ export default function LandingPage() {
         <div className={`container ${styles.footerContent}`}>
           <span className={styles.footerLogo}>WhatsApp <span style={{ color: "var(--color-primary)" }}>IA</span></span>
           <div className={styles.footerLinks}>
-            <a href="#">Privacidad</a>
+            <Link href="/privacy">Privacidad</Link>
             <a href="#">Términos</a>
             <a href="#">Contacto</a>
           </div>
