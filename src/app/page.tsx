@@ -166,13 +166,13 @@ export default function LandingPage() {
             como agendar citas o consultar información. Nunca vendemos ni compartimos tus datos con terceros.
           </p>
           <div style={{ textAlign: "center", marginTop: "24px" }}>
-            <Link
-              href="/privacy"
+            <a
+              href="https://whatsappia-av8c.onrender.com/privacy"
               className="btn btn-secondary btn-lg"
               style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
             >
               Leer nuestra Política de Privacidad
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -182,7 +182,7 @@ export default function LandingPage() {
         <div className={`container ${styles.footerContent}`}>
           <span className={styles.footerLogo}>WhatsApp<span style={{ color: "var(--color-primary)" }}>Agent</span></span>
           <div className={styles.footerLinks}>
-            <Link href="/privacy">Política de Privacidad</Link>
+            <a href="https://whatsappia-av8c.onrender.com/privacy">Política de Privacidad</a>
             <a href="#">Términos</a>
             <a href="#">Contacto</a>
           </div>
