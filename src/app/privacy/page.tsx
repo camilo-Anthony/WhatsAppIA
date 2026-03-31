@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidad - WhatsApp IA",
-  description: "Política de privacidad de WhatsApp IA. Conoce cómo recopilamos, usamos y protegemos tu información.",
+  title: "Política de Privacidad - WhatsAppAgent",
+  description: "Política de privacidad de WhatsAppAgent. Conoce cómo recopilamos, usamos y protegemos tu información.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
       <section style={{ marginBottom: "28px" }}>
         <h2 style={{ fontSize: "1.3rem", color: "#fff", marginBottom: "12px" }}>1. Información que recopilamos</h2>
         <p>
-          WhatsApp IA recopila la siguiente información cuando utilizas nuestro servicio:
+          WhatsAppAgent recopila la siguiente información cuando utilizas nuestro servicio:
         </p>
         <ul style={{ paddingLeft: "20px", marginTop: "8px" }}>
           <li>Información de tu cuenta (nombre, correo electrónico) proporcionada durante el registro.</li>

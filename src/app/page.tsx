@@ -13,7 +13,7 @@ export default function LandingPage() {
         <div className={`container ${styles.navContent}`}>
           <Link href="/" className={styles.navLogo}>
             <Logo size={32} />
-            <span>WhatsApp <span style={{ color: "var(--color-primary)" }}>IA</span></span>
+            <span>WhatsApp<span style={{ color: "var(--color-primary)" }}>Agent</span></span>
           </Link>
           <div className={styles.navActions}>
             <Link href="/login" className="btn btn-ghost">Iniciar sesión</Link>
@@ -159,14 +159,14 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className={styles.footer}>
         <div className={`container ${styles.footerContent}`}>
-          <span className={styles.footerLogo}>WhatsApp <span style={{ color: "var(--color-primary)" }}>IA</span></span>
+          <span className={styles.footerLogo}>WhatsApp<span style={{ color: "var(--color-primary)" }}>Agent</span></span>
           <div className={styles.footerLinks}>
             <Link href="/privacy">Privacidad</Link>
             <a href="#">Términos</a>
             <a href="#">Contacto</a>
           </div>
           <span className={styles.footerText}>
-            © 2026 WhatsApp IA · Desarrollado por Camilo Anthony
+            © 2026 WhatsAppAgent · Desarrollado por Camilo Anthony
           </span>
         </div>
       </footer>
