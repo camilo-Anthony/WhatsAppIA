@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "WhatsApp IA - Automatización Inteligente",
   description: "Plataforma SaaS de automatización de WhatsApp con IA personalizada. Automatiza la atención al cliente con inteligencia artificial.",
   keywords: ["whatsapp", "ia", "chatbot", "automatización", "saas", "inteligencia artificial"],
+  verification: {
+    google: "hc6sjoumMcnj6eMeJZqKMZWMNfYQhTSJB6t0QThmr9o",
+  },
   icons: {
     icon: "/logo.png",
   },
