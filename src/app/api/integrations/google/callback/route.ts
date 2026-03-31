@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code")
     const stateParam = searchParams.get("state")
     const error = searchParams.get("error")
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXTAUTH_URL || "https://whatsappia-av8c.onrender.com"
 
     if (error) {
         console.error("[Google OAuth] Error:", error)
