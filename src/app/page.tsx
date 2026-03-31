@@ -156,12 +156,33 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Transparencia y Privacidad */}
+      <section className={styles.howItWorks} id="privacy-section">
+        <div className="container">
+          <h2 className={styles.sectionTitle}>Tu privacidad es importante</h2>
+          <p className={styles.sectionSubtitle}>
+            WhatsAppAgent utiliza datos de usuario exclusivamente para proporcionar el servicio de automatización de WhatsApp.
+            Accedemos a tu cuenta de Google (Calendar, Sheets) solo cuando tú lo autorizas, para integrar funcionalidades
+            como agendar citas o consultar información. Nunca vendemos ni compartimos tus datos con terceros.
+          </p>
+          <div style={{ textAlign: "center", marginTop: "24px" }}>
+            <Link
+              href="/privacy"
+              className="btn btn-secondary btn-lg"
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+            >
+              Leer nuestra Política de Privacidad
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className={styles.footer}>
         <div className={`container ${styles.footerContent}`}>
           <span className={styles.footerLogo}>WhatsApp<span style={{ color: "var(--color-primary)" }}>Agent</span></span>
           <div className={styles.footerLinks}>
-            <Link href="/privacy">Privacidad</Link>
+            <Link href="/privacy">Política de Privacidad</Link>
             <a href="#">Términos</a>
             <a href="#">Contacto</a>
           </div>
