@@ -50,7 +50,7 @@ export async function POST(request: Request) {
         timestamp: Date.now(),
     })).toString("base64url")
 
-    const baseUrl = process.env.NEXTAUTH_URL || "https://whatsappia-av8c.onrender.com"
+    const baseUrl = (process.env.NEXTAUTH_URL || "https://whatsappia-av8c.onrender.com").replace(/\/+$/, "")
     const redirectUri = `${baseUrl}/api/integrations/google/callback`
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth")
