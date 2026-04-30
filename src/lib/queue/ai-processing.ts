@@ -48,10 +48,10 @@ async function processAIJob(job: Job<AIProcessingJob>) {
     console.log(`[Cola:IA] Procesando solicitud IA para +${clientPhone}`)
 
     try {
-        // Usar el agent loop (soporta tool calling + MCP)
-        const { agentLoop } = await import("@/lib/ai/agent-loop")
+        // Usar el agent pipeline determinístico (ZeroClaw-pattern)
+        const { agentPipeline } = await import("@/lib/ai/agent/agent-pipeline")
 
-        const result = await agentLoop({
+        const result = await agentPipeline({
             userId,
             connectionId,
             conversationId,

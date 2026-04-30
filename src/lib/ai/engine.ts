@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db"
-import { buildContext } from "@/lib/ai/context"
 import { generateResponse } from "@/lib/ai/providers/groq"
 
 interface ProcessMessageOptions {
@@ -84,9 +83,9 @@ export async function processIncomingMessage(
         },
     })
 
-    // 3. Process message using the Agent Loop (supports tool calling)
-    const { agentLoop } = await import("./agent-loop")
-    const result = await agentLoop({
+    // 3. Process message using the deterministic Agent Pipeline (ZeroClaw-pattern)
+    const { agentPipeline } = await import("./agent/agent-pipeline")
+    const result = await agentPipeline({
         userId,
         connectionId: validConnectionId,
         conversationId: conversation.id,
