@@ -176,16 +176,28 @@ export async function agentPipeline(
             }
         }
 
-        // Si el usuario niega en estado confirming, resetear
         if (convState.state === "confirming" && !isConfirmationMessage(messageContent)) {
             await resetToIdle(userId, clientPhone)
-            return simpleResponse(
-                "Entendido, no voy a realizar esa acción. ¿En qué más puedo ayudarte?",
-                startTime,
+            
+            const cancelResponse = "Entendido, he cancelado la acción. ¿En qué más puedo ayudarte?"
+            steps.push({
+                stepId: stepCounter++,
+                type: "response",
+                content: cancelResponse,
+                durationMs: Date.now() - startTime,
+                tokensUsed: 0,
+            })
+            
+            return {
+                response: cancelResponse,
+                toolsUsed: [],
+                iterations: 1,
+                tokensUsed: totalTokens,
                 steps,
-                totalTokens,
-                "idle"
-            )
+                runId: conversationId,
+                totalDurationMs: Date.now() - startTime,
+                finalState: "idle"
+            }
         }
 
         // ── 6. CLASIFICAR INTENCIÓN ──────────────────────────────
@@ -403,13 +415,15 @@ async function executeToolAction(
     }
 
     // Generar respuesta final basada en el resultado del tool
+    const toolCallId = `call_${Date.now()}`
+    
     const toolResultMessages: AIMessage[] = [
         ...messages,
         {
             role: "assistant",
             content: null,
             tool_calls: [{
-                id: `call_${Date.now()}`,
+                id: toolCallId,
                 type: "function",
                 function: {
                     name: toolName,
@@ -420,7 +434,7 @@ async function executeToolAction(
         {
             role: "tool",
             content: result.result,
-            tool_call_id: `call_${Date.now()}`,
+            tool_call_id: toolCallId,
         },
     ]
 
