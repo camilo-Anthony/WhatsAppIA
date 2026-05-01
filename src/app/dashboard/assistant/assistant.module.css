@@ -1,30 +1,33 @@
 .container {
-    animation: fadeIn 0.4s ease-out;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: var(--space-6);
-    flex-wrap: wrap;
+    margin-bottom: var(--space-10);
     gap: var(--space-4);
 }
 
 .title {
     font-size: var(--font-size-3xl);
-    font-weight: 700;
-    margin-bottom: var(--space-2);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-1);
+    letter-spacing: -0.02em;
 }
 
 .subtitle {
+    font-size: var(--font-size-base);
     color: var(--color-text-secondary);
 }
 
 .headerActions {
     display: flex;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-6);
 }
 
 /* Toggle */
@@ -32,39 +35,43 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
 }
 
 .toggleLabel {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--color-text-secondary);
-    font-weight: 500;
 }
 
 .toggle {
-    width: 48px;
-    height: 28px;
-    border-radius: var(--radius-full);
+    width: 40px;
+    height: 20px;
     background: var(--color-bg-tertiary);
-    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    border: none;
     position: relative;
-    cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-base);
 }
 
 .toggleOn {
     background: var(--color-primary);
-    border-color: var(--color-primary);
 }
 
 .toggleDot {
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
     position: absolute;
     top: 3px;
     left: 3px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: white;
-    transition: transform var(--transition-fast);
+    transition: transform var(--transition-base);
 }
 
 .toggleOn .toggleDot {
@@ -75,120 +82,108 @@
 .tabs {
     display: flex;
     gap: var(--space-1);
+    margin-bottom: var(--space-8);
     background: var(--color-bg-secondary);
     padding: var(--space-1);
     border-radius: var(--radius-lg);
-    margin-bottom: var(--space-6);
+    border: 1px solid var(--color-border);
     width: fit-content;
 }
 
 .tab {
-    padding: var(--space-2) var(--space-5);
-    border-radius: var(--radius-md);
-    border: none;
-    background: transparent;
-    color: var(--color-text-secondary);
+    padding: var(--space-2) var(--space-6);
     font-size: var(--font-size-sm);
-    font-weight: 500;
-    cursor: pointer;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
     transition: all var(--transition-fast);
 }
 
-.tab:hover {
-    color: var(--color-text-primary);
-}
-
 .tabActive {
-    background: var(--color-bg-card);
+    background: var(--color-bg-tertiary);
     color: var(--color-text-primary);
-    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Section */
+/* Sections */
 .section {
     animation: fadeIn 0.3s ease-out;
 }
 
 .sectionTitle {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
     margin-bottom: var(--space-4);
+    margin-top: var(--space-8);
 }
 
-.hint {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
-    margin-top: var(--space-2);
+.sectionTitle:first-child {
+    margin-top: 0;
 }
 
 /* Templates */
 .templateGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--space-3);
-    margin-bottom: var(--space-8);
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
 }
 
 .templateCard {
     padding: var(--space-4);
-    cursor: pointer;
     text-align: center;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    transition: all var(--transition-fast);
+    cursor: pointer;
     background: var(--color-bg-secondary);
-    color: var(--color-text-secondary);
 }
 
-.templateCard:hover:not(.templateActive) {
-    border-color: var(--color-border-hover);
-    transform: translateY(-2px);
-    background: var(--color-bg-card-hover);
-    color: var(--color-text-primary);
+.templateCard:hover {
+    border-color: var(--color-primary-hover);
 }
 
 .templateActive {
     border-color: var(--color-primary);
     background: var(--color-primary-light);
-    color: var(--color-text-primary);
 }
 
 .templateName {
-    font-weight: 500;
     font-size: var(--font-size-sm);
+    font-weight: 700;
+}
+
+.hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--space-3);
 }
 
 /* Mode Selector */
 .modeSelector {
     display: flex;
-    gap: var(--space-1);
-    background: var(--color-bg-secondary);
-    padding: var(--space-1);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--space-6);
-    width: fit-content;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
 }
 
 .modeBtn {
-    padding: var(--space-2) var(--space-5);
-    border-radius: var(--radius-md);
-    border: none;
-    background: transparent;
-    color: var(--color-text-secondary);
+    flex: 1;
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     font-size: var(--font-size-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.modeBtn:hover {
-    color: var(--color-text-primary);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-base);
 }
 
 .modeBtnActive {
-    background: var(--color-bg-card);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border);
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
 }
 
 /* Fields */
@@ -206,17 +201,43 @@
 }
 
 .fieldCard {
-    padding: var(--space-4);
+    padding: var(--space-5);
 }
 
 .fieldHeader {
     display: flex;
-    gap: var(--space-3);
-    margin-bottom: var(--space-3);
+    justify-content: space-between;
     align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
 }
 
 .fieldLabel {
     flex: 1;
-    font-weight: 500;
+    font-weight: 700;
+    background: transparent;
+    border-color: transparent;
+    padding-left: 0;
+    font-size: var(--font-size-base);
+}
+
+.fieldLabel:focus {
+    background: var(--color-bg-input);
+    padding-left: var(--space-4);
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .headerActions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .templateGrid {
+        grid-template-columns: 1fr 1fr;
+    }
 }

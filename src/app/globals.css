@@ -1,22 +1,23 @@
 /* =============================================
    WhatsApp IA SaaS - Design System
-   Solid Black Theme - Clean & Minimal
+   Solid Slate Theme - Clean & Minimal
+   Strict: No Emojis, No Gradients
    ============================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ---- CSS Variables (Design Tokens) ---- */
 :root {
-  /* Colors - Solid Black Theme */
-  --color-bg-primary: #000000;
-  --color-bg-secondary: #0a0a0a;
-  --color-bg-tertiary: #111111;
-  --color-bg-card: #0a0a0a;
-  --color-bg-card-hover: #141414;
-  --color-bg-input: #0a0a0a;
-  --color-bg-overlay: rgba(0, 0, 0, 0.8);
+  /* Colors - Solid Slate/Deep Charcoal Theme */
+  --color-bg-primary: #0f1115;
+  --color-bg-secondary: #16191f;
+  --color-bg-tertiary: #1c2128;
+  --color-bg-card: #16191f;
+  --color-bg-card-hover: #1c2128;
+  --color-bg-input: #0f1115;
+  --color-bg-overlay: rgba(15, 17, 21, 0.9);
 
-  /* Brand Colors */
+  /* Brand Colors - Solid */
   --color-primary: #25D366;
   --color-primary-hover: #1eba58;
   --color-primary-light: rgba(37, 211, 102, 0.1);
@@ -27,10 +28,10 @@
   --color-accent-light: rgba(6, 182, 212, 0.1);
 
   /* Text */
-  --color-text-primary: #e5e5e5;
-  --color-text-secondary: #888888;
-  --color-text-muted: #555555;
-  --color-text-inverse: #000000;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #0f172a;
 
   /* Borders */
   --color-border: rgba(255, 255, 255, 0.08);
@@ -38,7 +39,7 @@
   --color-border-focus: var(--color-primary);
 
   /* Status */
-  --color-success: #25D366;
+  --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
@@ -85,7 +86,7 @@
   --sidebar-width: 280px;
   --sidebar-collapsed: 72px;
   --header-height: 64px;
-  --max-width: 1280px;
+  --max-width: 1200px;
 }
 
 /* ---- Reset ---- */
@@ -107,7 +108,7 @@ body {
   font-family: var(--font-family);
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
-  line-height: 1.6;
+  line-height: 1.5;
   min-height: 100vh;
 }
 
@@ -163,6 +164,7 @@ select {
   padding: 0 var(--space-6);
 }
 
+/* Eliminar degradados */
 .gradient-text {
   color: var(--color-primary);
 }
@@ -175,10 +177,10 @@ select {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-6);
   font-size: var(--font-size-sm);
-  font-weight: 500;
-  border-radius: var(--radius-lg);
+  font-weight: 600;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
   transition: all var(--transition-base);
   outline: none;
@@ -198,10 +200,11 @@ select {
 
 .btn-primary:hover {
   background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .btn-primary:active {
-  opacity: 0.9;
+  transform: translateY(1px);
 }
 
 .btn-secondary {
@@ -238,19 +241,19 @@ select {
 }
 
 .btn-sm {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
   font-size: var(--font-size-xs);
 }
 
 .btn-lg {
-  padding: var(--space-4) var(--space-8);
+  padding: var(--space-4) var(--space-10);
   font-size: var(--font-size-base);
 }
 
 .btn-icon {
-  padding: var(--space-2);
-  width: 36px;
-  height: 36px;
+  padding: 0;
+  width: 38px;
+  height: 38px;
 }
 
 /* Inputs */
@@ -261,9 +264,11 @@ select {
 }
 
 .input-label {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
   color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .input {
@@ -271,7 +276,7 @@ select {
   padding: var(--space-3) var(--space-4);
   background: var(--color-bg-input);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   transition: all var(--transition-fast);
@@ -284,37 +289,30 @@ select {
 
 .input:focus {
   border-color: var(--color-border-focus);
+  background: var(--color-bg-secondary);
 }
 
 .input::placeholder {
   color: var(--color-text-muted);
 }
 
-.input-error {
-  border-color: var(--color-error);
-}
-
-.error-text {
-  font-size: var(--font-size-xs);
-  color: var(--color-error);
-}
-
 .textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 /* Cards */
 .card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   padding: var(--space-6);
-  transition: border-color var(--transition-base);
+  transition: all var(--transition-base);
 }
 
 .card:hover {
   border-color: var(--color-border-hover);
+  background: var(--color-bg-card-hover);
 }
 
 /* Badges */
@@ -322,59 +320,35 @@ select {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
+  padding: 0.125rem 0.625rem;
   font-size: var(--font-size-xs);
-  font-weight: 500;
+  font-weight: 600;
   border-radius: var(--radius-full);
   white-space: nowrap;
 }
 
-.badge-success {
-  background: rgba(37, 211, 102, 0.15);
-  color: var(--color-success);
-}
-
-.badge-warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--color-warning);
-}
-
-.badge-error {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--color-error);
-}
-
-.badge-info {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--color-info);
-}
+.badge-success { background: rgba(34, 197, 94, 0.1); color: var(--color-success); }
+.badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--color-warning); }
+.badge-error { background: rgba(239, 68, 68, 0.1); color: var(--color-error); }
+.badge-info { background: rgba(59, 130, 246, 0.1); color: var(--color-info); }
 
 /* Status Indicator */
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: inline-block;
 }
 
-.status-dot-connected {
-  background: var(--color-success);
-}
-
-.status-dot-disconnected {
-  background: var(--color-error);
-}
-
-.status-dot-pending {
-  background: var(--color-warning);
-  animation: blink 1.5s infinite;
-}
+.status-dot-connected { background: var(--color-success); }
+.status-dot-disconnected { background: var(--color-error); }
+.status-dot-pending { background: var(--color-warning); animation: blink 1.5s infinite; }
 
 /* Loading */
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid var(--color-border);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -382,37 +356,23 @@ select {
 
 .skeleton {
   background: var(--color-bg-tertiary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   animation: blink 1.5s infinite;
 }
 
 /* ---- Animations ---- */
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes blink {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.4;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
@@ -421,10 +381,6 @@ select {
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
-  :root {
-    --sidebar-width: 100%;
-  }
-
   .container {
     padding: 0 var(--space-4);
   }

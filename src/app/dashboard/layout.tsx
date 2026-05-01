@@ -112,7 +112,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 <div className={styles.sidebarHeader}>
                     <Link href="/dashboard" className={styles.sidebarLogo}>
                         <Logo size={32} />
-                        <span className={styles.sidebarLogoText}>WA <span className="gradient-text">IA</span></span>
+                        <span className={styles.sidebarLogoText}>WhatsApp IA</span>
                     </Link>
                 </div>
 
