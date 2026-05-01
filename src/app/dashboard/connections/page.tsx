@@ -134,24 +134,23 @@ function ConnectionCard({
                 </div>
             </div>
 
-            {/* QR code section for pending QR connections */}
             {status === "PENDING" && conn.mode === "QR" && (
                 <div className={styles.qrSection}>
                     {qrCode ? (
                         <div className={styles.qrCodeWrapper}>
                             <QRCodeSVG value={qrCode} size={200} level="M" includeMargin />
-                            <p style={{ marginTop: 16 }}>Escanea este código con WhatsApp</p>
-                            <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
+                            <p className={styles.qrInstructionMargin}>Escanea este código con WhatsApp</p>
+                            <small className={styles.monoText}>
                                 Abre WhatsApp {">"} Dispositivos vinculados {">"} Vincular un dispositivo
-                            </span>
+                            </small>
                         </div>
                     ) : (
                         <div className={styles.qrPlaceholder}>
-                            <span className="spinner" style={{ marginBottom: 16, width: 32, height: 32 }} />
+                            <span className={`spinner ${styles.spinnerLarge}`} />
                             <p>Generando código QR...</p>
-                            <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
+                            <small className={styles.monoText}>
                                 Por favor espera, conectando con WhatsApp
-                            </span>
+                            </small>
                         </div>
                     )}
                 </div>
@@ -218,12 +217,20 @@ function ConnectionTypeSelector({
     onSelect: (type: ConnectionType) => void
     onClose: () => void
 }) {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose()
+        }
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [onClose])
+
     return (
         <div className={styles.modalOverlay} onClick={onClose}>
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
                     <h2>Nueva Conexión</h2>
-                    <button className={styles.modalClose} onClick={onClose}>
+                    <button className={styles.modalClose} onClick={onClose} aria-label="Cerrar modal">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                             <path
                                 fillRule="evenodd"
@@ -238,9 +245,15 @@ function ConnectionTypeSelector({
 
                 <div className={styles.typeGrid}>
                     {/* QR Option */}
-                    <button className={styles.typeCard} onClick={() => onSelect("QR")}>
+                    <div 
+                        className={styles.typeCard} 
+                        role="button" 
+                        tabIndex={0} 
+                        onClick={() => onSelect("QR")}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect("QR") }}
+                    >
                         <div className={styles.typeIcon}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="3" y="3" width="7" height="7" rx="1" />
                                 <rect x="14" y="3" width="7" height="7" rx="1" />
                                 <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -250,7 +263,7 @@ function ConnectionTypeSelector({
                                 <rect x="18" y="18" width="3" height="3" />
                             </svg>
                         </div>
-                        <h3>Código QR (Web)</h3>
+                        <span className={styles.typeCardTitle}>Código QR (Web)</span>
                         <p>Simula WhatsApp Web escaneando el QR con tu propio celular.</p>
                         <div className={styles.typeDetails}>
                             <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Instantáneo y gratis</div>
@@ -259,17 +272,23 @@ function ConnectionTypeSelector({
                             <div className={styles.detailItem}><span className={styles.detailIconError}>!</span> Tu celular debe tener internet</div>
                         </div>
                         <span className={styles.typeTag}>Pruebas rápidas</span>
-                    </button>
+                    </div>
 
                     {/* API Oficial propia */}
-                    <button className={styles.typeCard} onClick={() => onSelect("OWN_ACCOUNT")}>
+                    <div 
+                        className={styles.typeCard} 
+                        role="button" 
+                        tabIndex={0} 
+                        onClick={() => onSelect("OWN_ACCOUNT")}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect("OWN_ACCOUNT") }}
+                    >
                         <div className={styles.typeIcon}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                                 <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
                         </div>
-                        <h3>API Oficial (Tu cuenta)</h3>
+                        <span className={styles.typeCardTitle}>API Oficial (Tu cuenta)</span>
                         <p>Únete mediante Meta Developers en tu Business Manager y conecta tu cuenta WABA.</p>
                         <div className={styles.typeDetails}>
                             <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> 100% oficial y antibloqueo</div>
@@ -278,18 +297,24 @@ function ConnectionTypeSelector({
                             <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> Meta cobra costos por conversación</div>
                         </div>
                         <span className={styles.typeTag}>Negocios 100% Seguros</span>
-                    </button>
+                    </div>
 
                     {/* API Oficial plataforma */}
-                    <button className={styles.typeCard} onClick={() => onSelect("MANAGED")}>
+                    <div 
+                        className={styles.typeCard} 
+                        role="button" 
+                        tabIndex={0} 
+                        onClick={() => onSelect("MANAGED")}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect("MANAGED") }}
+                    >
                         <div className={styles.typeIcon}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                                 <circle cx="12" cy="7" r="4" />
                                 <path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87" />
                             </svg>
                         </div>
-                        <h3>Cloud API (Integrada)</h3>
+                        <span className={styles.typeCardTitle}>Cloud API (Integrada)</span>
                         <p>Registras un nuevo número directamente en nuestra plataforma por SMS o llamada.</p>
                         <div className={styles.typeDetails}>
                             <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Oficial, sin riesgos de bloqueo</div>
@@ -297,7 +322,7 @@ function ConnectionTypeSelector({
                             <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> No se puede usar la App (solo API)</div>
                         </div>
                         <span className={styles.typeTag}>Administrado por nosotros</span>
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -317,6 +342,14 @@ function PhoneRegistrationFlow({ onClose, onSuccess }: { onClose: () => void; on
     const [connectionId, setConnectionId] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose()
+        }
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [onClose])
 
     const submitPhone = async () => {
         if (!phoneNumber.trim()) return
@@ -393,7 +426,7 @@ function PhoneRegistrationFlow({ onClose, onSuccess }: { onClose: () => void; on
                         {step === "verify_code" && "Verificar Código"}
                         {step === "success" && "¡Registro Exitoso!"}
                     </h2>
-                    <button className={styles.modalClose} onClick={onClose}>
+                    <button className={styles.modalClose} onClick={onClose} aria-label="Cerrar modal">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
@@ -452,10 +485,9 @@ function PhoneRegistrationFlow({ onClose, onSuccess }: { onClose: () => void; on
                         </div>
 
                         <button
-                            className="btn btn-primary"
+                            className={`btn btn-primary ${styles.fullWidthBtn}`}
                             onClick={submitPhone}
                             disabled={loading || !phoneNumber.trim()}
-                            style={{ marginTop: 16, width: "100%" }}
                         >
                             {loading ? (
                                 <>
@@ -478,19 +510,17 @@ function PhoneRegistrationFlow({ onClose, onSuccess }: { onClose: () => void; on
                         <label className={styles.formLabel}>Código de verificación</label>
                         <input
                             type="text"
-                            className={styles.formInput}
+                            className={`${styles.formInput} ${styles.codeInput}`}
                             placeholder="123456"
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
                             maxLength={6}
-                            style={{ letterSpacing: "0.5em", textAlign: "center", fontSize: "1.25rem" }}
                         />
 
                         <button
-                            className="btn btn-primary"
+                            className={`btn btn-primary ${styles.fullWidthBtn}`}
                             onClick={submitCode}
                             disabled={loading || !code.trim()}
-                            style={{ marginTop: 16, width: "100%" }}
                         >
                             {loading ? (
                                 <>
@@ -643,7 +673,7 @@ function ConnectionsContent() {
                 <div className={styles.grid}>
                     {Array.from({ length: 2 }).map((_, i) => (
                         <div key={i} className="card">
-                            <div className="skeleton" style={{ width: "100%", height: 200 }} />
+                            <div className={`skeleton ${styles.skeletonCard}`} />
                         </div>
                     ))}
                 </div>
@@ -709,7 +739,7 @@ export default function ConnectionsPage() {
                 <div className={styles.grid}>
                     {Array.from({ length: 2 }).map((_, i) => (
                         <div key={i} className="card">
-                            <div className="skeleton" style={{ width: "100%", height: 200 }} />
+                            <div className={`skeleton ${styles.skeletonCard}`} />
                         </div>
                     ))}
                 </div>
