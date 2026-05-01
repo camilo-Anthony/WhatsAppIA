@@ -5,9 +5,13 @@
 
 import Groq from "groq-sdk"
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
-})
+let groq: Groq;
+export function getGroqClient() {
+    if (!groq) {
+        groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    }
+    return groq;
+}
 
 // ==========================================
 // TIPOS
@@ -116,7 +120,7 @@ export async function generateResponse(
             requestParams.tool_choice = "auto"
         }
 
-        const completion = await groq.chat.completions.create(requestParams)
+        const completion = await getGroqClient().chat.completions.create(requestParams)
 
         const choice = completion.choices[0]
         const message = choice?.message
