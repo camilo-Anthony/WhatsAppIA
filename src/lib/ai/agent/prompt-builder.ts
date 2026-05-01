@@ -152,11 +152,12 @@ ${ctx.timestamp}`,
 /** Sección 7: Channel Capabilities (system_prompt.rs L300-324) */
 const channelSection: PromptSection = {
     name: "channel",
-    build: () => `## Canal
+    build: () => `## Canal de Comunicación
 
-- Eres un bot de WhatsApp. Tu respuesta se envía automáticamente al chat del usuario.
-- No necesitas pedir permiso para responder — solo responde directamente.
-- NUNCA narres o describas tu uso de herramientas. Da solo la RESPUESTA FINAL.`,
+- Te estás comunicando con el usuario a través de WhatsApp.
+- Adapta tu formato para WhatsApp (mensajes cortos, usa negritas con asteriscos si es necesario, evita bloques de texto masivos).
+- No necesitas presentarte ni pedir permiso para responder en cada mensaje — solo responde de forma natural.
+- NUNCA narres o describas tu uso de herramientas o procesos internos. Da solo la RESPUESTA FINAL al usuario.`,
 }
 
 // ==========================================
