@@ -68,7 +68,7 @@ export async function generateResponse(
     const {
         temperature = 0.7,
         maxTokens = 1024,
-        model = "llama-3.3-70b-versatile",
+        model = process.env.GROQ_MODEL || "llama-3.1-8b-instant",
         tools,
     } = options || {}
 
