@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { SessionProvider } from "next-auth/react"
-import styles from "./settings.module.css"
+import styles from "./account.module.css"
 
-function SettingsContent() {
+function AccountContent() {
     const { data: session } = useSession()
     const [formData, setFormData] = useState({
         name: "",
@@ -16,21 +16,6 @@ function SettingsContent() {
     })
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState("")
-    const [assistantActive, setAssistantActive] = useState(false)
-
-    const loadSettings = useCallback(async () => {
-        try {
-            const res = await fetch("/api/assistant/config")
-            if (res.ok) {
-                const data = await res.json()
-                if (data.config) {
-                    setAssistantActive(data.config.isActive)
-                }
-            }
-        } catch (error) {
-            console.error("Error loading settings:", error)
-        }
-    }, [])
 
     useEffect(() => {
         if (session?.user) {
@@ -39,30 +24,7 @@ function SettingsContent() {
                 name: session.user.name || "",
             }))
         }
-        loadSettings()
-    }, [session, loadSettings])
-
-    const toggleAssistant = async () => {
-        try {
-            const res = await fetch("/api/assistant/config")
-            if (res.ok) {
-                const data = await res.json()
-                if (data.config) {
-                    await fetch("/api/assistant/config", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            ...data.config,
-                            isActive: !assistantActive,
-                        }),
-                    })
-                    setAssistantActive(!assistantActive)
-                }
-            }
-        } catch (error) {
-            console.error("Error toggling assistant:", error)
-        }
-    }
+    }, [session])
 
     const handleSave = async () => {
         setSaving(true)
@@ -82,29 +44,8 @@ function SettingsContent() {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Configuración</h1>
-                <p className={styles.subtitle}>Gestiona tu cuenta y preferencias</p>
-            </div>
-
-            {/* Global Assistant Toggle */}
-            <div className={`card ${styles.settingCard}`}>
-                <div className={styles.settingHeader}>
-                    <div>
-                        <h2>Estado del asistente</h2>
-                        <p>Activa o desactiva el asistente globalmente</p>
-                    </div>
-                    <div className={styles.toggleWrapper}>
-                        <span className={assistantActive ? styles.statusActive : styles.statusInactive}>
-                            {assistantActive ? "Activo" : "Inactivo"}
-                        </span>
-                        <button
-                            className={`${styles.toggle} ${assistantActive ? styles.toggleOn : ""}`}
-                            onClick={toggleAssistant}
-                        >
-                            <span className={styles.toggleDot} />
-                        </button>
-                    </div>
-                </div>
+                <h1 className={styles.title}>Cuenta</h1>
+                <p className={styles.subtitle}>Gestiona tu información personal y seguridad</p>
             </div>
 
             {/* Profile */}
@@ -179,10 +120,10 @@ function SettingsContent() {
     )
 }
 
-export default function SettingsPage() {
+export default function AccountPage() {
     return (
         <SessionProvider>
-            <SettingsContent />
+            <AccountContent />
         </SessionProvider>
     )
 }

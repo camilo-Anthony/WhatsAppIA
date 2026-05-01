@@ -9,21 +9,21 @@
 /* ---- CSS Variables (Design Tokens) ---- */
 :root {
   /* Colors - Solid Slate/Deep Charcoal Theme */
-  --color-bg-primary: #0f1115;
-  --color-bg-secondary: #16191f;
-  --color-bg-tertiary: #1c2128;
-  --color-bg-card: #16191f;
-  --color-bg-card-hover: #1c2128;
-  --color-bg-input: #0f1115;
-  --color-bg-overlay: rgba(15, 17, 21, 0.9);
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #080808;
+  --color-bg-tertiary: #111111;
+  --color-bg-card: #080808;
+  --color-bg-card-hover: #111111;
+  --color-bg-input: #000000;
+  --color-bg-overlay: rgba(0, 0, 0, 0.9);
 
   /* Brand Colors - Solid */
   --color-primary: #25D366;
   --color-primary-hover: #1eba58;
-  --color-primary-light: rgba(37, 211, 102, 0.1);
+  --color-primary-light: rgba(var(--color-primary-rgb), 0.1);
   --color-secondary: #7c3aed;
   --color-secondary-hover: #6d28d9;
-  --color-secondary-light: rgba(124, 58, 237, 0.1);
+  --color-secondary-light: rgba(var(--color-secondary-rgb), 0.1);
   --color-accent: #06b6d4;
   --color-accent-light: rgba(6, 182, 212, 0.1);
 
@@ -34,8 +34,8 @@
   --color-text-inverse: #0f172a;
 
   /* Borders */
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-border: #1a1a1a;
+  --color-border-hover: #262626;
   --color-border-focus: var(--color-primary);
 
   /* Status */
@@ -43,6 +43,14 @@
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
+
+  /* RGB values for transparent variants (UI UX Pro Max) */
+  --color-primary-rgb: 37, 211, 102;
+  --color-secondary-rgb: 124, 58, 237;
+  --color-success-rgb: 34, 197, 94;
+  --color-warning-rgb: 245, 158, 11;
+  --color-error-rgb: 239, 68, 68;
+  --color-info-rgb: 59, 130, 246;
 
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -315,6 +323,40 @@ select {
   background: var(--color-bg-card-hover);
 }
 
+/* Toggles */
+.toggle {
+  width: 44px;
+  height: 24px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  position: relative;
+  transition: all var(--transition-fast);
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-on {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.toggle-dot {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--color-text-inverse);
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+}
+
+.toggle-on .toggle-dot {
+  transform: translateX(20px);
+}
+
 /* Badges */
 .badge {
   display: inline-flex;
@@ -384,4 +426,29 @@ select {
   .container {
     padding: 0 var(--space-4);
   }
+}
+
+/* Status Indicators */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.status-dot-connected {
+  background: var(--color-success);
+  box-shadow: 0 0 8px rgba(var(--color-success-rgb), 0.4);
+}
+
+.status-dot-pending {
+  background: var(--color-warning);
+  box-shadow: 0 0 8px rgba(var(--color-warning-rgb), 0.4);
+}
+
+.status-dot-disconnected {
+  background: var(--color-error);
+  box-shadow: 0 0 8px rgba(var(--color-error-rgb), 0.4);
 }

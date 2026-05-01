@@ -3,6 +3,19 @@
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
+import { 
+    Plus, 
+    X, 
+    QrCode, 
+    Layers, 
+    UserCheck, 
+    Smartphone, 
+    Check, 
+    AlertTriangle, 
+    Info, 
+    Trash2,
+    CheckCircle2
+} from "lucide-react"
 import styles from "./connections.module.css"
 
 // ==========================================
@@ -199,7 +212,7 @@ function ConnectionCard({
 
             <div className={styles.cardActions}>
                 <button className="btn btn-danger btn-sm" onClick={() => onDelete(conn.id)}>
-                    Eliminar
+                    <Trash2 size={14} /> Eliminar
                 </button>
             </div>
         </div>
@@ -225,104 +238,97 @@ function ConnectionTypeSelector({
         return () => window.removeEventListener("keydown", handleKeyDown)
     }, [onClose])
 
+    const options = [
+        {
+            type: "QR" as ConnectionType,
+            icon: <QrCode size={28} />,
+            title: "Código QR",
+            subtitle: "Pruebas",
+            description: "Escanea con tu celular como en WhatsApp Web.",
+            pros: ["Instantáneo", "Usa tu número actual"],
+            cons: ["Requiere celular con internet", "Riesgo de bloqueo por spam"],
+            tag: "Pruebas",
+            recommended: false,
+        },
+        {
+            type: "OWN_ACCOUNT" as ConnectionType,
+            icon: <Layers size={28} />,
+            title: "API Oficial",
+            subtitle: "Tu cuenta",
+            description: "Conecta tu WABA desde Meta Business Manager.",
+            pros: ["100% oficial y seguro", "Control total de la cuenta"],
+            cons: ["Requiere verificar negocio", "Meta cobra por conversación"],
+            tag: "Oficial",
+            recommended: true,
+        },
+        {
+            type: "MANAGED" as ConnectionType,
+            icon: <UserCheck size={28} />,
+            title: "Cloud API",
+            subtitle: "Integrada",
+            description: "Registra un nuevo número desde nuestra plataforma.",
+            pros: ["Sin riesgos de bloqueo", "Configuración más sencilla"],
+            cons: ["Solo disponible vía API (sin app)"],
+            tag: "Oficial",
+            recommended: true,
+        },
+    ]
+
     return (
         <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={`${styles.modal} ${styles.modalWideGrid}`} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
                     <h2>Nueva Conexión</h2>
                     <button className={styles.modalClose} onClick={onClose} aria-label="Cerrar modal">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                fillRule="evenodd"
-                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
+                        <X size={20} />
                     </button>
                 </div>
 
                 <p className={styles.modalSubtitle}>Selecciona cómo quieres conectar tu número de WhatsApp</p>
 
-                <div className={styles.typeGrid}>
-                    {/* QR Option */}
-                    <div 
-                        className={styles.typeCard} 
-                        role="button" 
-                        tabIndex={0} 
-                        onClick={() => onSelect("QR")}
-                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect("QR") }}
-                    >
-                        <div className={styles.typeIcon}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="7" height="7" rx="1" />
-                                <rect x="14" y="3" width="7" height="7" rx="1" />
-                                <rect x="3" y="14" width="7" height="7" rx="1" />
-                                <rect x="14" y="14" width="3" height="3" />
-                                <rect x="18" y="14" width="3" height="3" />
-                                <rect x="14" y="18" width="3" height="3" />
-                                <rect x="18" y="18" width="3" height="3" />
-                            </svg>
+                <div className={styles.typeGridCards}>
+                    {options.map((opt) => (
+                        <div
+                            key={opt.type}
+                            className={`${styles.typeCardCol} ${opt.recommended ? styles.typeCardColRecommended : ""}`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => onSelect(opt.type)}
+                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(opt.type) }}
+                        >
+                            {opt.recommended && (
+                                <span className={styles.recommendedBadgeCol}>Recomendado</span>
+                            )}
+                            
+                            <div className={styles.typeCardColIcon}>
+                                {opt.icon}
+                            </div>
+                            
+                            <div className={styles.typeCardColHeader}>
+                                <h3 className={styles.typeCardColTitle}>{opt.title}</h3>
+                                <span className={styles.typeCardColSubtitle}>{opt.subtitle}</span>
+                            </div>
+                            
+                            <p className={styles.typeCardColDesc}>{opt.description}</p>
+                            
+                            <div className={styles.typeCardColDetails}>
+                                <div className={styles.typeCardColPros}>
+                                    {opt.pros.map((p) => (
+                                        <span key={p} className={styles.typeCardColPro}>
+                                            <Check size={14} className={styles.detailIconSuccess} /> {p}
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className={styles.typeCardColCons}>
+                                    {opt.cons.map((c) => (
+                                        <span key={c} className={styles.typeCardColCon}>
+                                            <AlertTriangle size={14} className={styles.detailIconMuted} /> {c}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                        <span className={styles.typeCardTitle}>Código QR (Web)</span>
-                        <p>Simula WhatsApp Web escaneando el QR con tu propio celular.</p>
-                        <div className={styles.typeDetails}>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Instantáneo y gratis</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Usa tu número actual (app)</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconError}>!</span> Riesgo de bloqueo si hay spam masivo</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconError}>!</span> Tu celular debe tener internet</div>
-                        </div>
-                        <span className={styles.typeTag}>Pruebas rápidas</span>
-                    </div>
-
-                    {/* API Oficial propia */}
-                    <div 
-                        className={styles.typeCard} 
-                        role="button" 
-                        tabIndex={0} 
-                        onClick={() => onSelect("OWN_ACCOUNT")}
-                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect("OWN_ACCOUNT") }}
-                    >
-                        <div className={styles.typeIcon}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                                <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
-                        </div>
-                        <span className={styles.typeCardTitle}>API Oficial (Tu cuenta)</span>
-                        <p>Únete mediante Meta Developers en tu Business Manager y conecta tu cuenta WABA.</p>
-                        <div className={styles.typeDetails}>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> 100% oficial y antibloqueo</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Conservas control total de la cuenta</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> Requiere verificar negocio en Meta</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> Meta cobra costos por conversación</div>
-                        </div>
-                        <span className={styles.typeTag}>Negocios 100% Seguros</span>
-                    </div>
-
-                    {/* API Oficial plataforma */}
-                    <div 
-                        className={styles.typeCard} 
-                        role="button" 
-                        tabIndex={0} 
-                        onClick={() => onSelect("MANAGED")}
-                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect("MANAGED") }}
-                    >
-                        <div className={styles.typeIcon}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                                <path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87" />
-                            </svg>
-                        </div>
-                        <span className={styles.typeCardTitle}>Cloud API (Integrada)</span>
-                        <p>Registras un nuevo número directamente en nuestra plataforma por SMS o llamada.</p>
-                        <div className={styles.typeDetails}>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Oficial, sin riesgos de bloqueo</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconSuccess}></span> Más fácil que configurar cuentas de Meta</div>
-                            <div className={styles.detailItem}><span className={styles.detailIconWarning}></span> No se puede usar la App (solo API)</div>
-                        </div>
-                        <span className={styles.typeTag}>Administrado por nosotros</span>
-                    </div>
+                    ))}
                 </div>
             </div>
         </div>
@@ -427,9 +433,7 @@ function PhoneRegistrationFlow({ onClose, onSuccess }: { onClose: () => void; on
                         {step === "success" && "¡Registro Exitoso!"}
                     </h2>
                     <button className={styles.modalClose} onClick={onClose} aria-label="Cerrar modal">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
+                        <X size={20} />
                     </button>
                 </div>
 
@@ -536,10 +540,7 @@ function PhoneRegistrationFlow({ onClose, onSuccess }: { onClose: () => void; on
                 {step === "success" && (
                     <div className={styles.successSection}>
                         <div className={styles.successIcon}>
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2">
-                                <path d="M9 12l2 2 4-4" />
-                                <circle cx="12" cy="12" r="10" />
-                            </svg>
+                            <CheckCircle2 size={48} color="var(--color-success)" />
                         </div>
                         <h3>¡Número registrado!</h3>
                         <p>Tu número {phoneNumber} ha sido verificado y conectado exitosamente.</p>
@@ -664,7 +665,7 @@ function ConnectionsContent() {
                             Conectando...
                         </>
                     ) : (
-                        "+ Nueva conexión"
+                        <><Plus size={18} /> Nueva conexión</>
                     )}
                 </button>
             </div>
@@ -680,19 +681,12 @@ function ConnectionsContent() {
             ) : connections.length === 0 ? (
                 <div className={styles.emptyState}>
                     <div className={styles.emptyIcon}>
-                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                            <rect width="64" height="64" rx="20" fill="var(--color-primary-light)" />
-                            <path
-                                d="M32 16C23.72 16 17 22.72 17 31C17 33.84 17.77 36.5 19.13 38.81L17.13 46L24.44 44.05C26.68 45.28 29.25 45.97 32 45.97C40.28 45.97 47 39.25 47 30.97C47 22.72 40.28 16 32 16Z"
-                                fill="var(--color-primary)"
-                                fillOpacity="0.6"
-                            />
-                        </svg>
+                        <Smartphone size={64} color="var(--color-primary)" />
                     </div>
                     <h2>No tienes conexiones</h2>
                     <p>Conecta tu primer número de WhatsApp para empezar a automatizar</p>
                     <button className="btn btn-primary btn-lg" onClick={() => setShowSelector(true)}>
-                        + Conectar WhatsApp
+                        <Plus size={20} /> Conectar WhatsApp
                     </button>
                 </div>
             ) : (

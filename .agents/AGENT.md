@@ -75,6 +75,8 @@
 - `design-system-patterns` - Design tokens, themes, componentes React
 - `accessibility-compliance` - WCAG, ARIA, accesibilidad web
 - `responsive-design` - Media queries, breakpoints, mobile-first
+- `ui-ux-pro-max` - Intelligent design system generation, 67 styles, 161 palettes
+
 
 ### Testing & APIs
 - `e2e-testing-patterns` - Playwright/Cypress patterns

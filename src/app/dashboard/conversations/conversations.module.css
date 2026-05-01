@@ -99,7 +99,7 @@
     justify-content: center;
     font-weight: 600;
     font-size: var(--font-size-sm);
-    color: white;
+    color: var(--color-text-inverse);
     flex-shrink: 0;
 }
 

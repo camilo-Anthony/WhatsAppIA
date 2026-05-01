@@ -1,0 +1,53 @@
+.container {
+    animation: fadeIn 0.4s ease-out;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.header {
+    margin-bottom: var(--space-8);
+}
+
+.title {
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+}
+
+.settingCard {
+    margin-bottom: var(--space-5);
+}
+
+.settingCard h2 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-4);
+}
+
+.settingCard p {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.formGrid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.message {
+    font-size: var(--font-size-sm);
+    color: var(--color-success);
+    font-weight: 500;
+}

@@ -1,3 +1,10 @@
+import { 
+    Activity, 
+    MessageCircle, 
+    Users, 
+    Zap,
+    ArrowRight
+} from "lucide-react"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import styles from "./overview.module.css"
@@ -37,46 +44,30 @@ export default async function DashboardPage() {
         {
             label: "Conexiones activas",
             value: activeConnectionsCount.toString(),
-            icon: (
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-            ),
+            icon: <Activity size={24} />,
             color: "var(--color-primary)",
-            bgColor: "var(--color-bg-tertiary)",
+            bgColor: "rgba(var(--color-primary-rgb), 0.1)",
         },
         {
             label: "Mensajes hoy",
             value: messagesTodayCount.toString(),
-            icon: (
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                </svg>
-            ),
+            icon: <MessageCircle size={24} />,
             color: "var(--color-primary)",
-            bgColor: "var(--color-bg-tertiary)",
+            bgColor: "rgba(var(--color-primary-rgb), 0.1)",
         },
         {
             label: "Conversaciones",
             value: conversationsCount.toString(),
-            icon: (
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                </svg>
-            ),
+            icon: <Users size={24} />,
             color: "var(--color-primary)",
-            bgColor: "var(--color-bg-tertiary)",
+            bgColor: "rgba(var(--color-primary-rgb), 0.1)",
         },
         {
             label: "Estado",
             value: activeConnectionsCount > 0 ? "Activo" : "Inactivo",
-            icon: (
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                </svg>
-            ),
-            color: "var(--color-primary)",
-            bgColor: "var(--color-bg-tertiary)",
+            icon: <Zap size={24} />,
+            color: activeConnectionsCount > 0 ? "var(--color-success)" : "var(--color-error)",
+            bgColor: activeConnectionsCount > 0 ? "rgba(var(--color-success-rgb), 0.1)" : "rgba(var(--color-error-rgb), 0.1)",
         },
     ]
 
@@ -120,13 +111,13 @@ export default async function DashboardPage() {
                     </a>
                     <a href="/dashboard/assistant" className={`card card-interactive ${styles.actionCard}`}>
                         <div className={styles.actionNumber}>2</div>
-                        <h3>Configurar asistente</h3>
-                        <p>Define cómo se comporta tu IA y qué información conoce</p>
+                        <h3>Comportamiento</h3>
+                        <p>Define el prompt y la personalidad de tu asistente</p>
                     </a>
-                    <a href="/dashboard/conversations" className={`card card-interactive ${styles.actionCard}`}>
+                    <a href="/dashboard/assistant/knowledge" className={`card card-interactive ${styles.actionCard}`}>
                         <div className={styles.actionNumber}>3</div>
-                        <h3>Ver conversaciones</h3>
-                        <p>Revisa el historial de mensajes con tus clientes</p>
+                        <h3>Información</h3>
+                        <p>Agrega los datos del negocio que el bot usará para responder</p>
                     </a>
                 </div>
             </div>

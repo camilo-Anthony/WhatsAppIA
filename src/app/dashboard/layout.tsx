@@ -5,74 +5,73 @@ import { useState, useEffect } from "react"
 import { signOut, useSession } from "next-auth/react"
 import Link from "next/link"
 import { SessionProvider } from "next-auth/react"
+import { 
+    LayoutDashboard, 
+    Link2, 
+    Bot, 
+    MessageSquare, 
+    Database, 
+    Cpu, 
+    Settings,
+    LogOut,
+    Menu,
+    X
+} from "lucide-react"
 import Logo from "@/components/Logo"
 import styles from "./dashboard.module.css"
 
-const navItems = [
+const navGroups = [
     {
-        label: "Panel",
-        href: "/dashboard",
-        icon: (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-            </svg>
-        ),
+        title: "PANEL",
+        items: [
+            {
+                label: "Panel",
+                href: "/dashboard",
+                icon: <LayoutDashboard size={20} />,
+                exact: true,
+            },
+        ],
     },
     {
-        label: "Conexiones",
-        href: "/dashboard/connections",
-        icon: (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-        ),
+        title: "AGENTE",
+        items: [
+            {
+                label: "Conexiones",
+                href: "/dashboard/connections",
+                icon: <Link2 size={20} />,
+            },
+            {
+                label: "Asistente",
+                href: "/dashboard/assistant",
+                icon: <Bot size={20} />,
+                exact: false, // Match sub-routes like /dashboard/assistant/knowledge
+            },
+            {
+                label: "Integraciones",
+                href: "/dashboard/integrations",
+                icon: <Cpu size={20} />,
+            },
+        ],
     },
     {
-        label: "Asistente",
-        href: "/dashboard/assistant",
-        icon: (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-            </svg>
-        ),
+        title: "MONITOR",
+        items: [
+            {
+                label: "Conversaciones",
+                href: "/dashboard/conversations",
+                icon: <MessageSquare size={20} />,
+            },
+        ],
     },
     {
-        label: "Conversaciones",
-        href: "/dashboard/conversations",
-        icon: (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-            </svg>
-        ),
-    },
-    {
-        label: "Datos externos",
-        href: "/dashboard/data-sources",
-        icon: (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
-                <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
-                <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
-            </svg>
-        ),
-    },
-    {
-        label: "Integraciones",
-        href: "/dashboard/integrations",
-        icon: (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-            </svg>
-        ),
-    },
-    {
-        label: "Configuración",
-        href: "/dashboard/settings",
-        icon: (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-            </svg>
-        ),
+        title: "CUENTA",
+        items: [
+            {
+                label: "Cuenta",
+                href: "/dashboard/account",
+                icon: <Settings size={20} />,
+            },
+        ],
     },
 ]
 
@@ -80,10 +79,49 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [assistantActive, setAssistantActive] = useState(false)
+
+    const loadAssistantStatus = async () => {
+        try {
+            const res = await fetch("/api/assistant/config")
+            if (res.ok) {
+                const data = await res.json()
+                if (data.config) {
+                    setAssistantActive(data.config.isActive)
+                }
+            }
+        } catch (error) {
+            console.error("Error loading assistant status:", error)
+        }
+    }
+
+    const toggleAssistant = async () => {
+        try {
+            const res = await fetch("/api/assistant/config")
+            if (res.ok) {
+                const data = await res.json()
+                if (data.config) {
+                    const newStatus = !assistantActive
+                    await fetch("/api/assistant/config", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...data.config,
+                            isActive: newStatus,
+                        }),
+                    })
+                    setAssistantActive(newStatus)
+                }
+            }
+        } catch (error) {
+            console.error("Error toggling assistant:", error)
+        }
+    }
 
     // Close sidebar on route change
     useEffect(() => {
         setSidebarOpen(false)
+        loadAssistantStatus()
     }, [pathname])
 
     return (
@@ -94,13 +132,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 aria-label="Toggle menu"
             >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    {sidebarOpen ? (
-                        <path d="M6 18L18 6M6 6l12 12" />
-                    ) : (
-                        <path d="M4 6h16M4 12h16M4 18h16" />
-                    )}
-                </svg>
+                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
 
             {/* Overlay */}
@@ -117,17 +149,42 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <nav className={styles.nav}>
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`${styles.navItem} ${pathname === item.href ? styles.navItemActive : ""}`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </Link>
+                    {navGroups.map((group) => (
+                        <div key={group.title} className={styles.navGroup}>
+                            <h3 className={styles.navSection}>{group.title}</h3>
+                            {group.items.map((item) => {
+                                const isActive = item.exact 
+                                    ? pathname === item.href 
+                                    : pathname.startsWith(item.href)
+                                    
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
+                                    >
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                    </Link>
+                                )
+                            })}
+                        </div>
                     ))}
                 </nav>
+
+                <div className={styles.sidebarStatus}>
+                    <div className={styles.statusLabel}>
+                        <Bot size={16} />
+                        <span>Asistente IA</span>
+                    </div>
+                    <button
+                        className={`toggle ${assistantActive ? "toggle-on" : ""}`}
+                        onClick={toggleAssistant}
+                        title={assistantActive ? "Desactivar Asistente" : "Activar Asistente"}
+                    >
+                        <span className="toggle-dot" />
+                    </button>
+                </div>
 
                 <div className={styles.sidebarFooter}>
                     <div className={styles.userInfo}>
@@ -144,15 +201,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                         onClick={() => signOut({ callbackUrl: "/login" })}
                         title="Cerrar sesión"
                     >
-                        <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                        </svg>
+                        <LogOut size={18} />
                     </button>
                 </div>
             </aside>
 
             <main className={styles.main}>
-                {children}
+                <div className={styles.workspace}>
+                    {children}
+                </div>
             </main>
         </div>
     )

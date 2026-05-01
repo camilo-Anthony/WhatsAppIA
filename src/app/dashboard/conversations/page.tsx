@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { Search, MessageSquare } from "lucide-react"
 import styles from "./conversations.module.css"
 
 interface Message {
@@ -87,9 +88,7 @@ export default function ConversationsPage() {
                 {/* Conversation List */}
                 <div className={styles.listPanel}>
                     <div className={styles.searchBox}>
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" className={styles.searchIcon}>
-                            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                        </svg>
+                        <Search size={16} className={styles.searchIcon} />
                         <input
                             type="text"
                             className={`input ${styles.searchInput}`}
@@ -149,9 +148,7 @@ export default function ConversationsPage() {
                 <div className={styles.messagePanel}>
                     {!selectedId ? (
                         <div className={styles.emptyMessages}>
-                            <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor" style={{ color: "var(--color-text-muted)" }}>
-                                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                            </svg>
+                            <MessageSquare size={48} style={{ color: "var(--color-text-muted)" }} />
                             <p>Selecciona una conversación</p>
                             <span>Elige una conversación de la lista para ver los mensajes</span>
                         </div>

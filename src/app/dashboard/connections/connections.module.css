@@ -69,18 +69,18 @@
 }
 
 .badgeQR {
-    background: rgba(var(--color-primary-rgb, 99, 102, 241), 0.15);
-    color: var(--color-primary, rgb(99, 102, 241));
+    background: rgba(var(--color-primary-rgb), 0.15);
+    color: var(--color-primary);
 }
 
 .badgeOwn {
-    background: rgba(var(--color-success-rgb, 16, 185, 129), 0.15);
-    color: var(--color-success, rgb(16, 185, 129));
+    background: rgba(var(--color-success-rgb), 0.15);
+    color: var(--color-success);
 }
 
 .badgeManaged {
-    background: rgba(var(--color-warning-rgb, 245, 158, 11), 0.15);
-    color: var(--color-warning, rgb(245, 158, 11));
+    background: rgba(var(--color-warning-rgb), 0.15);
+    color: var(--color-warning);
 }
 
 .monoText {
@@ -194,7 +194,7 @@
 .modalOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--color-bg-overlay);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -263,112 +263,137 @@
 }
 
 /* ==========================================
-   TYPE SELECTOR
+   TYPE SELECTOR — Grid Layout
    ========================================== */
 
-.typeGrid {
+.modalWideGrid {
+    max-width: 960px;
+}
+
+.typeGridCards {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-4);
+    margin-top: var(--space-4);
 }
 
-@media (min-width: 640px) {
-    .typeGrid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px) {
-    .typeGrid {
+@media (min-width: 768px) {
+    .typeGridCards {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
-.typeCard {
+.typeCardCol {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--space-3);
-    padding: var(--space-5);
+    padding: var(--space-6) var(--space-5);
     background: var(--color-bg-tertiary);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
-    color: var(--color-text-secondary);
+    text-align: left;
 }
 
-.typeCard:hover {
+.typeCardCol:hover {
     border-color: var(--color-primary);
     background: var(--color-bg-card-hover);
     transform: translateY(-2px);
-    color: var(--color-text-primary);
 }
 
-.typeIcon {
-    width: 56px;
-    height: 56px;
+.typeCardColRecommended {
+    border-color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb, 16, 185, 129), 0.04);
+}
+
+.recommendedBadgeCol {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-primary);
+    color: var(--color-bg-primary);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 16, 185, 129), 0.2);
+}
+
+.typeCardColIcon {
+    width: 48px;
+    height: 48px;
     border-radius: var(--radius-lg);
     background: var(--color-primary-light);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--color-primary);
+    margin-bottom: var(--space-4);
 }
 
-.typeCardTitle {
-    font-size: var(--font-size-sm);
+.typeCardColHeader {
+    margin-bottom: var(--space-2);
+}
+
+.typeCardColTitle {
+    font-size: var(--font-size-lg);
     font-weight: 600;
-    margin: 0;
     color: var(--color-text-primary);
-}
-
-.typeCard p {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
     margin: 0;
-    line-height: 1.5;
 }
 
-.typeDetails {
+.typeCardColSubtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.typeCardColDesc {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin: 0 0 var(--space-5) 0;
+    flex-grow: 1;
+}
+
+.typeCardColDetails {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.typeCardColPros,
+.typeCardColCons {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    width: 100%;
-    margin-top: var(--space-4);
-    margin-bottom: var(--space-4);
-    padding-top: var(--space-4);
-    border-top: 1px dashed var(--color-border);
-    text-align: left;
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
 }
 
-.detailItem {
+.typeCardColPro,
+.typeCardColCon {
     display: flex;
     align-items: flex-start;
     gap: var(--space-2);
+    font-size: var(--font-size-sm);
     line-height: 1.4;
 }
 
-.detailIconSuccess { color: var(--color-success); font-weight: bold; width: 14px; text-align: center; flex-shrink: 0; }
-.detailIconWarning { color: var(--color-warning); font-weight: bold; width: 14px; text-align: center; flex-shrink: 0; }
-.detailIconError { color: var(--color-error); font-weight: bold; width: 14px; text-align: center; flex-shrink: 0; }
-
-.typeTag {
-    margin-top: auto;
-    display: inline-block;
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: var(--color-primary-light);
-    color: var(--color-primary);
+.typeCardColPro {
+    color: var(--color-text-primary);
 }
+
+.typeCardColCon {
+    color: var(--color-text-secondary);
+}
+
+.detailIconSuccess { color: var(--color-success); flex-shrink: 0; margin-top: 2px; }
+.detailIconMuted { color: var(--color-text-muted); flex-shrink: 0; margin-top: 2px; }
 
 /* ==========================================
    FORM ELEMENTS
@@ -409,7 +434,7 @@
 .formInput:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
 }
 
 .formInput::placeholder {
@@ -445,9 +470,9 @@
 }
 
 .errorBanner {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: rgb(239, 68, 68);
+    background: rgba(var(--color-error-rgb), 0.1);
+    border: 1px solid rgba(var(--color-error-rgb), 0.3);
+    color: var(--color-error);
     padding: var(--space-3);
     border-radius: var(--radius-md);
     font-size: var(--font-size-sm);

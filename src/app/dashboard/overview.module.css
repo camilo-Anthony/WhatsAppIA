@@ -75,6 +75,28 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    transition: all var(--transition-base);
+}
+
+.actionCard:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-card-hover);
+}
+
+.actionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-1);
+}
+
+.actionArrow {
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast);
+}
+
+.actionCard:hover .actionArrow {
+    color: var(--color-primary);
 }
 
 .actionCard h3 {
@@ -98,7 +120,7 @@
     justify-content: center;
     font-size: var(--font-size-sm);
     font-weight: 700;
-    color: white;
+    color: var(--color-text-inverse);
 }
 
 @media (max-width: 768px) {
@@ -107,7 +129,7 @@
     }
 
     .statsGrid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
     }
 
     .actionsGrid {
