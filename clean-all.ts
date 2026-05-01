@@ -29,7 +29,7 @@ async function main() {
         await prisma.infoField.deleteMany();
         
         console.log("- Eliminando Configuraciones de Bot...");
-        await prisma.botConfig.deleteMany();
+        await prisma.assistantConfig.deleteMany();
 
         console.log("- Eliminando Integraciones...");
         await prisma.integration.deleteMany();
