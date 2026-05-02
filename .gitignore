@@ -46,3 +46,6 @@ next-env.d.ts
 # build outputs
 build-output.txt
 prisma-output.txt
+
+# local docs
+docs/
