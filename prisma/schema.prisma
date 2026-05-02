@@ -161,6 +161,7 @@ model Conversation {
   clientPhone String
   clientName  String?
   isArchived  Boolean  @default(false)
+  metadata    Json?    // Estado de conversación multi-turn (antes en Redis)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

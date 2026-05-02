@@ -1,27 +1,19 @@
 /**
- * Conversation State — Máquina de estados persistida en Redis.
+ * Conversation State — Estado multi-turn persistido en PostgreSQL.
  *
  * Gestiona el estado multi-turn de conversaciones de WhatsApp.
- * No existe en ZeroClaw (es single-session), es nuestra extensión
- * para manejar el flujo: idle → collecting_slots → confirming → executing → idle
+ * Usa PostgreSQL (campo JSON en Conversation) en vez de Redis.
+ *
+ * Flujo: idle → collecting_slots → confirming → executing → idle
  *
  * @module agent/conversation-state
  */
 
-import { redis } from "@/lib/queue/redis"
+import { prisma } from "@/lib/db"
 import type { ConversationContext, ConversationState } from "./types"
-import { CONVERSATION_STATE_TTL_SECONDS } from "./types"
 
 // ==========================================
-// REDIS KEY
-// ==========================================
-
-function stateKey(userId: string, contactPhone: string): string {
-    return `conv:${userId}:${contactPhone}`
-}
-
-// ==========================================
-// STATE OPERATIONS
+// STATE OPERATIONS (PostgreSQL)
 // ==========================================
 
 /**
@@ -32,30 +24,59 @@ export async function getConversationState(
     userId: string,
     contactPhone: string
 ): Promise<ConversationContext> {
-    const key = stateKey(userId, contactPhone)
-    const raw = await redis.get(key)
+    const conversation = await prisma.conversation.findFirst({
+        where: { userId, clientPhone: contactPhone },
+        select: { metadata: true },
+    })
 
-    if (!raw) {
+    if (!conversation?.metadata) {
         return createFreshState(userId, contactPhone)
     }
 
     try {
-        const state = JSON.parse(raw) as ConversationContext
+        const meta = conversation.metadata as any
+        if (!meta.conversationState) {
+            return createFreshState(userId, contactPhone)
+        }
+
+        const state = meta.conversationState as ConversationContext
+
+        // Verificar TTL (30 min de inactividad = reset a idle)
+        const TTL_MS = 30 * 60 * 1000
+        if (state.lastUpdated && Date.now() - state.lastUpdated > TTL_MS) {
+            return createFreshState(userId, contactPhone)
+        }
+
         return state
     } catch {
-        // JSON corrupto — crear estado fresco
         return createFreshState(userId, contactPhone)
     }
 }
 
 /**
- * Guardar el estado de una conversación en Redis.
- * Se renueva el TTL con cada actualización.
+ * Guardar el estado de una conversación en PostgreSQL.
  */
 export async function setConversationState(ctx: ConversationContext): Promise<void> {
-    const key = stateKey(ctx.userId, ctx.contactPhone)
     ctx.lastUpdated = Date.now()
-    await redis.set(key, JSON.stringify(ctx), "EX", CONVERSATION_STATE_TTL_SECONDS)
+
+    const conversation = await prisma.conversation.findFirst({
+        where: { userId: ctx.userId, clientPhone: ctx.contactPhone },
+        select: { id: true, metadata: true },
+    })
+
+    if (!conversation) return
+
+    const existingMeta = (conversation.metadata as any) || {}
+
+    await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
+            metadata: {
+                ...existingMeta,
+                conversationState: ctx,
+            },
+        },
+    })
 }
 
 /**
@@ -65,8 +86,20 @@ export async function clearConversationState(
     userId: string,
     contactPhone: string
 ): Promise<void> {
-    const key = stateKey(userId, contactPhone)
-    await redis.del(key)
+    const conversation = await prisma.conversation.findFirst({
+        where: { userId, clientPhone: contactPhone },
+        select: { id: true, metadata: true },
+    })
+
+    if (!conversation) return
+
+    const existingMeta = (conversation.metadata as any) || {}
+    delete existingMeta.conversationState
+
+    await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { metadata: existingMeta },
+    })
 }
 
 /**

@@ -1,9 +1,7 @@
 /**
  * Queue Worker Orchestrator
- * Inicializa todos los workers de cola + retry cron al arrancar.
- *
- * FIX: Verifica Redis antes de crear BullMQ workers.
- *      El retry cron SIEMPRE arranca (fallback de emergencia DB).
+ * Solo inicia el retry-cron para procesar jobs fallidos desde la DB.
+ * BullMQ/Redis ya no se usa — todo se procesa directamente.
  */
 
 import { startRetryCron } from "./retry-cron"
@@ -13,49 +11,25 @@ const globalForQueues = globalThis as unknown as {
 }
 
 /**
- * Inicializa todos los workers de cola.
- * Solo se ejecuta una vez (singleton pattern).
+ * Inicializa el sistema de colas.
+ * Solo arranca el retry-cron (fallback para jobs que fallan).
  */
 export async function initializeQueueWorkers() {
     if (globalForQueues.queuesInitialized) {
-        console.log("[Colas] Workers ya inicializados, omitiendo...")
+        console.log("[Colas] Ya inicializado, omitiendo...")
         return
     }
 
-    console.log("[Colas] Inicializando workers...")
+    console.log("[Colas] Modo directo (sin Redis) — solo retry-cron")
 
-    // 1. Verificar Redis ANTES de crear workers costosos
-    const { isRedisAvailable } = await import("./redis")
-    const redisUp = await isRedisAvailable()
-
-    if (redisUp) {
-        try {
-            const { startIncomingWorker } = await import("./incoming")
-            const { startAIProcessingWorker } = await import("./ai-processing")
-            const { startOutgoingWorker } = await import("./outgoing")
-            
-            startIncomingWorker()
-            startAIProcessingWorker()
-            startOutgoingWorker()
-            console.log("[Colas] Workers de Redis iniciados correctamente")
-        } catch (error) {
-            console.error("[Colas] Error inicializando workers de Redis:", error)
-        }
-    } else {
-        console.warn("[Colas] Redis NO disponible — omitiendo BullMQ workers")
-        console.warn("[Colas] El sistema operará en MODO EMERGENCIA (solo DB)")
-    }
-
-    // 2. SIEMPRE iniciar el retry cron (fallback de emergencia)
     try {
-        startRetryCron(15_000) // 15s para modo emergencia
-        console.log("[Colas] Retry cron iniciado (fallback emergencia activo)")
+        startRetryCron(15_000) // Cada 15s procesa jobs fallidos
+        console.log("[Colas] Retry cron iniciado")
     } catch (error) {
         console.error("[Colas] Error CRÍTICO inicializando retry cron:", error)
     }
 
     globalForQueues.queuesInitialized = true
-    console.log("[Colas] Inicialización completada")
 }
 
 if (process.env.NODE_ENV !== "production") {
