@@ -118,11 +118,28 @@ model WhatsAppConnection {
 
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages        Message[]
+  sessions        WhatsAppSession[]
   assistantConfig AssistantConfig?   @relation(fields: [assistantConfigId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([phoneNumber])
   @@map("whatsapp_connections")
+}
+
+model WhatsAppSession {
+  id           String   @id @default(cuid())
+  connectionId String
+  category     String   // "creds" | "keys" | "app-state-sync-key" ...
+  key          String   // identifier for the key
+  data         String   @db.Text // stringified JSON
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  connection   WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, category, key])
+  @@index([connectionId])
+  @@map("whatsapp_sessions")
 }
 
 model AssistantConfig {

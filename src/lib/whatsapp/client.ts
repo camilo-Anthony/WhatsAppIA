@@ -8,7 +8,6 @@
  */
 
 import makeWASocket, {
-    useMultiFileAuthState,
     DisconnectReason,
     fetchLatestBaileysVersion,
 } from "@whiskeysockets/baileys"
@@ -18,6 +17,7 @@ import fs from "node:fs"
 import { prisma } from "../db"
 import { handleBaileysMessage } from "./listener"
 import { dispatch } from "@/lib/queue/dispatcher"
+import { usePostgresAuthState } from "./auth"
 
 export class WhatsAppClient {
     public connectionId: string
@@ -35,7 +35,7 @@ export class WhatsAppClient {
     }
 
     public async initialize() {
-        const { state, saveCreds } = await useMultiFileAuthState(this.authFolder)
+        const { state, saveCreds } = await usePostgresAuthState(this.connectionId)
         const { version } = await fetchLatestBaileysVersion()
 
         this.socket = makeWASocket({

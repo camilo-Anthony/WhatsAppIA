@@ -102,10 +102,39 @@ export async function retryPendingJobs(): Promise<number> {
 }
 
 // ==========================================
+// CLEANUP MANTENIMIENTO DB
+// ==========================================
+
+/**
+ * Borra jobs completados o fallidos de más de 24 horas de antigüedad.
+ * Esto mantiene la tabla temporal limpia sin borrar los historiales
+ * de mensajes ni las conversaciones reales.
+ */
+export async function cleanupCompletedJobs() {
+    try {
+        const thresholdDate = new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 horas
+
+        const deleted = await prisma.queueJob.deleteMany({
+            where: {
+                status: { in: ["completed", "failed"] },
+                createdAt: { lt: thresholdDate },
+            },
+        })
+
+        if (deleted.count > 0) {
+            console.log(`[RetryCron] Limpieza: Borrados ${deleted.count} jobs antiguos.`)
+        }
+    } catch (err) {
+        console.error("[RetryCron] Error en cleanup:", err)
+    }
+}
+
+// ==========================================
 // INTERVALO AUTOMÁTICO
 // ==========================================
 
 let retryInterval: ReturnType<typeof setInterval> | null = null
+let cleanupCounter = 0
 
 export function startRetryCron(intervalMs = 15_000) {
     if (retryInterval) return
@@ -113,6 +142,13 @@ export function startRetryCron(intervalMs = 15_000) {
     retryInterval = setInterval(async () => {
         try {
             await retryPendingJobs()
+
+            // Correr cleanup cada ~1 hora aprox (suponiendo interval 15s -> 240 ticks)
+            cleanupCounter++
+            if (cleanupCounter >= 240) {
+                cleanupCounter = 0
+                await cleanupCompletedJobs()
+            }
         } catch (err) {
             console.error("[RetryCron] Error fatal:", err)
         }
