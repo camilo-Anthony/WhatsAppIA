@@ -396,6 +396,57 @@
 .detailIconMuted { color: var(--color-text-muted); flex-shrink: 0; margin-top: 2px; }
 
 /* ==========================================
+   ASSISTANT CONTROLS (per-connection)
+   ========================================== */
+
+.assistantControls {
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.assistantToggleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.assistantLabel {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.profileSelectorRow {
+    display: flex;
+}
+
+.profileSelectSmall {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+}
+
+.profileSelectSmall:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.profileSelectSmall option {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+/* ==========================================
    FORM ELEMENTS
    ========================================== */
 

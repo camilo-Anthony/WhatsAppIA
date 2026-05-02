@@ -65,15 +65,20 @@ export async function agentPipeline(
     try {
         // ── 1. CARGAR CONFIG + TOOLS + ESTADO ────────────────────
 
-        const [config, userTools, convState] = await Promise.all([
-            prisma.assistantConfig.findUnique({ where: { userId } }),
+        const [connection, userTools, convState] = await Promise.all([
+            prisma.whatsAppConnection.findUnique({ 
+                where: { id: connectionId },
+                include: { assistantConfig: true }
+            }),
             getUserTools(userId),
             getConversationState(userId, clientPhone),
         ])
 
-        if (!config || !config.isActive) {
+        if (!connection || !connection.isAssistantActive || !connection.assistantConfig) {
             return errorResult("El asistente no está configurado o está inactivo.", startTime, steps)
         }
+        
+        const config = connection.assistantConfig
 
         // Convertir RegisteredTool[] a ToolSpec[] para el prompt builder
         const toolSpecs: ToolSpec[] = userTools.map((t) => ({

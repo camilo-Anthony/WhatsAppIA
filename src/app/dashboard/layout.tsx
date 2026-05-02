@@ -10,7 +10,6 @@ import {
     Link2, 
     Bot, 
     MessageSquare, 
-    Database, 
     Cpu, 
     Settings,
     LogOut,
@@ -41,10 +40,10 @@ const navGroups = [
                 icon: <Link2 size={20} />,
             },
             {
-                label: "Asistente",
+                label: "Laboratorio IA",
                 href: "/dashboard/assistant",
                 icon: <Bot size={20} />,
-                exact: false, // Match sub-routes like /dashboard/assistant/knowledge
+                exact: false,
             },
             {
                 label: "Integraciones",
@@ -79,49 +78,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [sidebarOpen, setSidebarOpen] = useState(false)
-    const [assistantActive, setAssistantActive] = useState(false)
-
-    const loadAssistantStatus = async () => {
-        try {
-            const res = await fetch("/api/assistant/config")
-            if (res.ok) {
-                const data = await res.json()
-                if (data.config) {
-                    setAssistantActive(data.config.isActive)
-                }
-            }
-        } catch (error) {
-            console.error("Error loading assistant status:", error)
-        }
-    }
-
-    const toggleAssistant = async () => {
-        try {
-            const res = await fetch("/api/assistant/config")
-            if (res.ok) {
-                const data = await res.json()
-                if (data.config) {
-                    const newStatus = !assistantActive
-                    await fetch("/api/assistant/config", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            ...data.config,
-                            isActive: newStatus,
-                        }),
-                    })
-                    setAssistantActive(newStatus)
-                }
-            }
-        } catch (error) {
-            console.error("Error toggling assistant:", error)
-        }
-    }
 
     // Close sidebar on route change
     useEffect(() => {
         setSidebarOpen(false)
-        loadAssistantStatus()
     }, [pathname])
 
     return (
@@ -171,20 +131,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                         </div>
                     ))}
                 </nav>
-
-                <div className={styles.sidebarStatus}>
-                    <div className={styles.statusLabel}>
-                        <Bot size={16} />
-                        <span>Asistente IA</span>
-                    </div>
-                    <button
-                        className={`toggle ${assistantActive ? "toggle-on" : ""}`}
-                        onClick={toggleAssistant}
-                        title={assistantActive ? "Desactivar Asistente" : "Activar Asistente"}
-                    >
-                        <span className="toggle-dot" />
-                    </button>
-                </div>
 
                 <div className={styles.sidebarFooter}>
                     <div className={styles.userInfo}>

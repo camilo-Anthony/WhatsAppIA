@@ -1,136 +1,184 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { Plus, Bot, Link2, Trash2, Copy } from "lucide-react"
 import styles from "./assistant.module.css"
 
-interface AssistantConfig {
+interface AssistantProfile {
+    id: string
+    name: string
     behaviorPrompt: string
     infoMode: "SIMPLE" | "ADVANCED"
-    simpleInfo: string
-    isActive: boolean
+    connections: { id: string }[]
 }
 
-const BEHAVIOR_TEMPLATES = [
-    {
-        name: "Amigable",
-        prompt: "Eres un asistente virtual amigable y cercano. Usa un tono cálido y empático. Responde de manera clara y sencilla. Mantén un lenguaje natural para hacer la conversación más agradable. Si no puedes ayudar con algo, sugiere amablemente contactar directamente al negocio.",
-    },
-    {
-        name: "Profesional",
-        prompt: "Eres un asistente virtual profesional y eficiente. Mantén un tono formal pero accesible. Responde de manera precisa y directa. Prioriza la claridad y exactitud en cada respuesta. Cuando no tengas información, indica que derivarás la consulta al equipo correspondiente.",
-    },
-    {
-        name: "Vendedor",
-        prompt: "Eres un asistente de ventas entusiasta y persuasivo. Tu objetivo es ayudar al cliente a encontrar lo que necesita y guiarlo hacia una compra. Destaca los beneficios de los productos/servicios. Haz preguntas para entender las necesidades del cliente. Ofrece alternativas cuando sea posible.",
-    },
-    {
-        name: "Soporte Técnico",
-        prompt: "Eres un asistente de soporte técnico paciente y detallado. Guía al usuario paso a paso para resolver sus problemas. Usa un lenguaje claro evitando jerga técnica innecesaria. Si el problema requiere intervención humana, escala amablemente proporcionando los pasos ya realizados.",
-    },
-]
-
-export default function AssistantBehaviorPage() {
-    const [config, setConfig] = useState<AssistantConfig | null>(null)
-    const [saving, setSaving] = useState(false)
-    const [saved, setSaved] = useState(false)
+export default function AssistantListPage() {
+    const [profiles, setProfiles] = useState<AssistantProfile[]>([])
     const [loading, setLoading] = useState(true)
+    const router = useRouter()
 
-    const loadConfig = useCallback(async () => {
+    const loadProfiles = useCallback(async () => {
         try {
             const res = await fetch("/api/assistant/config")
             if (res.ok) {
                 const data = await res.json()
-                if (data.config) {
-                    setConfig({
-                        behaviorPrompt: data.config.behaviorPrompt,
-                        infoMode: data.config.infoMode,
-                        simpleInfo: data.config.simpleInfo || "",
-                        isActive: data.config.isActive,
-                    })
+                if (data.profiles) {
+                    setProfiles(data.profiles)
                 }
             }
         } catch (error) {
-            console.error("Error loading config:", error)
+            console.error("Error loading profiles:", error)
         } finally {
             setLoading(false)
         }
     }, [])
 
     useEffect(() => {
-        loadConfig()
-    }, [loadConfig])
+        loadProfiles()
+    }, [loadProfiles])
 
-    const handleSave = async () => {
-        if (!config) return
-        setSaving(true)
-        setSaved(false)
+    const handleCreate = () => {
+        router.push("/dashboard/assistant/new")
+    }
+
+    const handleDelete = async (e: React.MouseEvent, id: string, name: string) => {
+        e.stopPropagation()
+        if (!confirm(`¿Eliminar al agente "${name}"? Las conexiones asociadas quedarán sin perfil.`)) return
 
         try {
-            await fetch("/api/assistant/config", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(config),
-            })
-            setSaved(true)
-            setTimeout(() => setSaved(false), 3000)
+            const res = await fetch(`/api/assistant/config/${id}`, { method: "DELETE" })
+            if (res.ok) {
+                loadProfiles()
+            }
         } catch (error) {
-            console.error("Error saving:", error)
-        } finally {
-            setSaving(false)
+            console.error("Error deleting profile:", error)
+        }
+    }
+
+    const handleDuplicate = async (e: React.MouseEvent, profile: AssistantProfile) => {
+        e.stopPropagation()
+        try {
+            const getRes = await fetch(`/api/assistant/config/${profile.id}`)
+            if (!getRes.ok) return
+            const data = await getRes.json()
+            const fullProfile = data.profile
+
+            const postRes = await fetch("/api/assistant/config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: `${fullProfile.name} (copia)`,
+                    behaviorPrompt: fullProfile.behaviorPrompt,
+                    infoMode: fullProfile.infoMode,
+                    simpleInfo: fullProfile.simpleInfo,
+                }),
+            })
+            if (postRes.ok) {
+                loadProfiles()
+            }
+        } catch (error) {
+            console.error("Error duplicating profile:", error)
         }
     }
 
     if (loading) {
         return (
-            <div className={styles.section}>
-                <div className="skeleton" style={{ width: "100%", height: 200 }} />
+            <div className={styles.grid} style={{ marginTop: "var(--space-6)" }}>
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="skeleton" style={{ height: 160, borderRadius: "var(--radius-lg)" }} />
+                ))}
             </div>
         )
     }
 
-    if (!config) return null
-
-    return (
-        <div className={styles.section}>
-            <div className={styles.fieldsHeader}>
-                <h2 className={styles.sectionTitle} style={{ marginTop: 0 }}>Plantillas de comportamiento</h2>
-                <button
-                    className="btn btn-primary btn-sm"
-                    onClick={handleSave}
-                    disabled={saving}
+    if (profiles.length === 0) {
+        return (
+            <div className={styles.emptyProfiles}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-4)', color: 'var(--color-primary)' }}>
+                    <Bot size={48} />
+                </div>
+                <h3>No tienes agentes creados</h3>
+                <p>Crea tu primer agente IA para conectarlo a tus números de WhatsApp.</p>
+                <button 
+                    className="btn btn-primary" 
+                    onClick={handleCreate}
                 >
-                    {saving ? "Guardando..." : saved ? "✓ Guardado" : "Guardar cambios"}
+                    <Plus size={18} /> Crear Agente
                 </button>
             </div>
-            
-            <div className={styles.templateGrid}>
-                {BEHAVIOR_TEMPLATES.map((template) => (
-                    <button
-                        key={template.name}
-                        className={`card ${styles.templateCard} ${config.behaviorPrompt === template.prompt ? styles.templateActive : ""
-                            }`}
-                        onClick={() =>
-                            setConfig((prev) => prev ? { ...prev, behaviorPrompt: template.prompt } : null)
-                        }
-                    >
-                        <span className={styles.templateName}>{template.name}</span>
-                    </button>
-                ))}
+        )
+    }
+
+    return (
+        <div>
+            <div className={styles.header}>
+                <div>
+                    <h1 className={styles.title}>Laboratorio IA</h1>
+                    <p className={styles.subtitle}>Crea y gestiona agentes inteligentes para tus conexiones</p>
+                </div>
             </div>
 
-            <h2 className={styles.sectionTitle}>Prompt personalizado</h2>
-            <textarea
-                className="input textarea"
-                style={{ minHeight: 200 }}
-                value={config.behaviorPrompt}
-                onChange={(e) =>
-                    setConfig((prev) => prev ? { ...prev, behaviorPrompt: e.target.value } : null)
-                }
-                placeholder="Define cómo debe comportarse tu asistente..."
-            />
-            <p className={styles.hint}>
-                Este prompt define la personalidad y reglas de tu asistente. Sé específico sobre el tono, límites y comportamiento esperado.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-6)' }}>
+                <button 
+                    className="btn btn-primary" 
+                    onClick={handleCreate}
+                >
+                    <Plus size={18} /> Nuevo Agente
+                </button>
+            </div>
+
+            <div className={styles.grid}>
+                {profiles.map((profile) => (
+                    <div 
+                        key={profile.id} 
+                        className={`card ${styles.agentCard}`}
+                        onClick={() => router.push(`/dashboard/assistant/${profile.id}`)}
+                    >
+                        <div className={styles.agentCardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                                <div className={styles.agentAvatar}>
+                                    <Bot size={24} />
+                                </div>
+                                <h3 className={styles.agentName}>{profile.name}</h3>
+                            </div>
+                            <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+                                <button 
+                                    className="btn btn-ghost btn-icon" 
+                                    onClick={(e) => handleDuplicate(e, profile)} 
+                                    title="Duplicar"
+                                >
+                                    <Copy size={16} />
+                                </button>
+                                <button 
+                                    className="btn btn-ghost btn-icon" 
+                                    onClick={(e) => handleDelete(e, profile.id, profile.name)} 
+                                    title="Eliminar"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className={styles.agentCardBody}>
+                            <p className={styles.agentSnippet}>
+                                {profile.behaviorPrompt.length > 80 
+                                    ? profile.behaviorPrompt.substring(0, 80) + '...' 
+                                    : profile.behaviorPrompt}
+                            </p>
+                            <div className={styles.agentMeta}>
+                                <span className={`badge badge-neutral ${styles.metaBadge}`}>
+                                    {profile.infoMode === "SIMPLE" ? "Conocimiento Simple" : "Conocimiento Avanzado"}
+                                </span>
+                                <span className={`badge badge-neutral ${styles.metaBadge}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Link2 size={12} />
+                                    {profile.connections.length} {profile.connections.length === 1 ? 'conexión' : 'conexiones'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }

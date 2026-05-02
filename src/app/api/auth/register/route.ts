@@ -56,7 +56,6 @@ export async function POST(request: Request) {
                 behaviorPrompt: `Eres un asistente virtual amigable y profesional. Responde de manera clara y concisa. Si no tienes información sobre algo, indica amablemente que no puedes ayudar con eso y sugiere contactar directamente.`,
                 infoMode: "SIMPLE",
                 simpleInfo: "",
-                isActive: false,
             },
         })
 

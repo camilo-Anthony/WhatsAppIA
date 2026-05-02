@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import styles from "../assistant.module.css"
+import { Save } from "lucide-react"
+import styles from "../../assistant.module.css"
 
 interface InfoField {
     id?: string
@@ -11,6 +12,7 @@ interface InfoField {
 }
 
 interface AssistantConfig {
+    id: string
     infoMode: "SIMPLE" | "ADVANCED"
     simpleInfo: string
 }
@@ -24,25 +26,60 @@ const DEFAULT_FIELDS: InfoField[] = [
     { label: "Preguntas frecuentes", content: "", order: 5 },
 ]
 
-export default function AssistantKnowledgePage() {
-    const [config, setConfig] = useState<AssistantConfig>({
-        infoMode: "SIMPLE",
-        simpleInfo: "",
-    })
+import { use } from "react"
+
+export default function AssistantKnowledgePage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = use(params)
+    const [config, setConfig] = useState<AssistantConfig | null>(null)
     const [infoFields, setInfoFields] = useState<InfoField[]>(DEFAULT_FIELDS)
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [loading, setLoading] = useState(true)
 
+    const router = require("next/navigation").useRouter()
+
     const loadConfig = useCallback(async () => {
+        if (resolvedParams.id === "new") {
+            const draftStr = localStorage.getItem("assistant_draft")
+            if (draftStr) {
+                const draft = JSON.parse(draftStr)
+                setConfig({
+                    id: "new",
+                    infoMode: draft.infoMode || "SIMPLE",
+                    simpleInfo: draft.simpleInfo || ""
+                })
+                if (draft.infoFields) {
+                    setInfoFields(draft.infoFields)
+                }
+            } else {
+                // Si no hay draft, creamos uno básico
+                const initialDraft = {
+                    id: "new",
+                    name: "Nuevo Agente",
+                    behaviorPrompt: "Eres un asistente virtual amable y profesional. Respondes de forma clara y concisa.",
+                    infoMode: "SIMPLE",
+                    simpleInfo: ""
+                }
+                setConfig({
+                    id: "new",
+                    infoMode: "SIMPLE",
+                    simpleInfo: ""
+                })
+                localStorage.setItem("assistant_draft", JSON.stringify(initialDraft))
+            }
+            setLoading(false)
+            return
+        }
+
         try {
-            const res = await fetch("/api/assistant/config")
+            const res = await fetch(`/api/assistant/config/${resolvedParams.id}`)
             if (res.ok) {
                 const data = await res.json()
-                if (data.config) {
+                if (data.profile) {
                     setConfig({
-                        infoMode: data.config.infoMode,
-                        simpleInfo: data.config.simpleInfo || "",
+                        id: data.profile.id,
+                        infoMode: data.profile.infoMode,
+                        simpleInfo: data.profile.simpleInfo || "",
                     })
                 }
                 if (data.infoFields?.length > 0) {
@@ -54,33 +91,56 @@ export default function AssistantKnowledgePage() {
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [resolvedParams.id])
 
     useEffect(() => {
         loadConfig()
     }, [loadConfig])
 
-    const handleSave = async () => {
+    // Sincronizar cambios en el config (infoMode, simpleInfo) al draft
+    const updateConfigAndDraft = (updates: Partial<AssistantConfig>) => {
+        setConfig((prev) => {
+            if (!prev) return null
+            const updated = { ...prev, ...updates }
+            if (resolvedParams.id === "new") {
+                const draftStr = localStorage.getItem("assistant_draft")
+                const draft = draftStr ? JSON.parse(draftStr) : {}
+                localStorage.setItem("assistant_draft", JSON.stringify({
+                    ...draft,
+                    infoMode: updated.infoMode,
+                    simpleInfo: updated.simpleInfo
+                }))
+            }
+            return updated
+        })
+    }
+
+    // Sincronizar cambios en los campos al draft
+    const syncFieldsToDraft = (fields: InfoField[]) => {
+        if (resolvedParams.id === "new") {
+            const draftStr = localStorage.getItem("assistant_draft")
+            const draft = draftStr ? JSON.parse(draftStr) : {}
+            localStorage.setItem("assistant_draft", JSON.stringify({
+                ...draft,
+                infoFields: fields
+            }))
+        }
+    }
+
+    const handleSave = useCallback(async () => {
+        if (!config || resolvedParams.id === "new") return
         setSaving(true)
         setSaved(false)
 
         try {
-            // To update infoMode and simpleInfo, we need to fetch the existing config first
-            // to not overwrite behaviorPrompt and isActive
-            const res = await fetch("/api/assistant/config")
-            const data = await res.json()
-            
-            if (data.config) {
-                await fetch("/api/assistant/config", {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        ...data.config,
-                        infoMode: config.infoMode,
-                        simpleInfo: config.simpleInfo,
-                    }),
-                })
-            }
+            await fetch(`/api/assistant/config/${resolvedParams.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    infoMode: config.infoMode,
+                    simpleInfo: config.simpleInfo,
+                }),
+            })
 
             // Save info fields if in advanced mode
             if (config.infoMode === "ADVANCED") {
@@ -98,26 +158,41 @@ export default function AssistantKnowledgePage() {
         } finally {
             setSaving(false)
         }
-    }
+    }, [config, infoFields, resolvedParams.id])
+
+    useEffect(() => {
+        window.addEventListener('save-assistant', handleSave as any)
+        return () => window.removeEventListener('save-assistant', handleSave as any)
+    }, [handleSave])
 
     const addField = () => {
-        setInfoFields((prev) => [
-            ...prev,
-            { label: "Nuevo campo", content: "", order: prev.length },
-        ])
+        setInfoFields((prev) => {
+            const updated = [
+                ...prev,
+                { label: "Nuevo campo", content: "", order: prev.length },
+            ]
+            syncFieldsToDraft(updated)
+            return updated
+        })
     }
 
     const removeField = (index: number) => {
-        setInfoFields((prev) => prev.filter((_, i) => i !== index))
+        setInfoFields((prev) => {
+            const updated = prev.filter((_, i) => i !== index)
+            syncFieldsToDraft(updated)
+            return updated
+        })
     }
 
     const updateField = (index: number, key: "label" | "content", value: string) => {
-        setInfoFields((prev) =>
-            prev.map((field, i) => (i === index ? { ...field, [key]: value } : field))
-        )
+        setInfoFields((prev) => {
+            const updated = prev.map((field, i) => (i === index ? { ...field, [key]: value } : field))
+            syncFieldsToDraft(updated)
+            return updated
+        })
     }
 
-    if (loading) {
+    if (loading || !config) {
         return (
             <div className={styles.section}>
                 <div className="skeleton" style={{ width: "100%", height: 300 }} />
@@ -127,27 +202,18 @@ export default function AssistantKnowledgePage() {
 
     return (
         <div className={styles.section}>
-            <div className={styles.fieldsHeader}>
-                <div className={styles.modeSelector} style={{ marginBottom: 0 }}>
-                    <button
-                        className={`${styles.modeBtn} ${config.infoMode === "SIMPLE" ? styles.modeBtnActive : ""}`}
-                        onClick={() => setConfig((prev) => ({ ...prev, infoMode: "SIMPLE" }))}
-                    >
-                        Modo simple
-                    </button>
-                    <button
-                        className={`${styles.modeBtn} ${config.infoMode === "ADVANCED" ? styles.modeBtnActive : ""}`}
-                        onClick={() => setConfig((prev) => ({ ...prev, infoMode: "ADVANCED" }))}
-                    >
-                        Modo avanzado
-                    </button>
-                </div>
+            <div className={styles.modeSelector} style={{ marginBottom: "var(--space-6)" }}>
                 <button
-                    className="btn btn-primary btn-sm"
-                    onClick={handleSave}
-                    disabled={saving}
+                    className={`${styles.modeBtn} ${config.infoMode === "SIMPLE" ? styles.modeBtnActive : ""}`}
+                    onClick={() => updateConfigAndDraft({ infoMode: "SIMPLE" })}
                 >
-                    {saving ? "Guardando..." : saved ? "✓ Guardado" : "Guardar cambios"}
+                    Modo simple
+                </button>
+                <button
+                    className={`${styles.modeBtn} ${config.infoMode === "ADVANCED" ? styles.modeBtnActive : ""}`}
+                    onClick={() => updateConfigAndDraft({ infoMode: "ADVANCED" })}
+                >
+                    Modo avanzado
                 </button>
             </div>
 
@@ -158,9 +224,7 @@ export default function AssistantKnowledgePage() {
                         className="input textarea"
                         style={{ minHeight: 300 }}
                         value={config.simpleInfo}
-                        onChange={(e) =>
-                            setConfig((prev) => ({ ...prev, simpleInfo: e.target.value }))
-                        }
+                        onChange={(e) => updateConfigAndDraft({ simpleInfo: e.target.value })}
                         placeholder="Escribe toda la información que tu asistente debe conocer: servicios, precios, horarios, políticas, preguntas frecuentes..."
                     />
                     <p className={styles.hint}>

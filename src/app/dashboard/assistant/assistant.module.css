@@ -30,35 +30,128 @@
     gap: var(--space-6);
 }
 
-/* Toggle */
+/* Breadcrumb & Top Actions */
+.breadcrumbBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4) 0;
+    position: sticky;
+    top: calc(var(--space-8) * -1); /* Stay at the very top of scrolled area */
+    background: var(--color-bg-secondary);
+    z-index: 10;
+    margin-bottom: var(--space-2);
+}
+
+.breadcrumbLink {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    transition: color var(--transition-fast);
+}
+
+.breadcrumbLink:hover {
+    color: var(--color-text-primary);
+}
+
+.breadcrumbActions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* Lab Header */
+.labHeader {
+    margin-bottom: var(--space-6);
+}
+
+.labTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--space-1);
+}
+
+.labSubtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-weight: 400;
+}
+
+/* Profile Header Section */
+.profileHeaderSection {
+    margin-bottom: var(--space-6);
+}
+
+.profileNameDisplay {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
 
 /* Tabs */
 .tabs {
     display: flex;
-    gap: var(--space-1);
+    gap: var(--space-8);
     margin-bottom: var(--space-8);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: calc(var(--space-8) * -1 + 52px); /* breadcrumb height approx 52px */
     background: var(--color-bg-secondary);
-    padding: var(--space-1);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    width: fit-content;
+    z-index: 9;
 }
 
 .tab {
-    padding: var(--space-2) var(--space-6);
+    padding: var(--space-4) 0;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    border-radius: var(--radius-md);
     color: var(--color-text-secondary);
     background: transparent;
     border: none;
+    border-bottom: 2px solid transparent;
     transition: all var(--transition-fast);
+    margin-bottom: -1px;
+}
+
+.tab:hover {
+    color: var(--color-text-primary);
 }
 
 .tabActive {
-    background: var(--color-bg-tertiary);
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+/* Page Surface */
+.pageContainer {
+    /* Blend with workspace */
+    padding: 0;
+}
+
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-8);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-4);
+}
+
+.pageHeaderTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
     color: var(--color-text-primary);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    margin: 0;
+}
+
+.pageHeaderSubtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-top: var(--space-1);
 }
 
 /* Sections */
@@ -92,7 +185,9 @@
     padding: var(--space-4);
     text-align: center;
     cursor: pointer;
-    background: var(--color-bg-secondary);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
 }
 
 .templateCard:hover {
@@ -194,4 +289,224 @@
     .templateGrid {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+/* ==========================================
+   PROFILE MANAGEMENT BAR
+   ========================================== */
+
+.profileBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-6);
+}
+
+.profileSelector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.profileDropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dropdownIcon {
+    position: absolute;
+    right: 10px;
+    pointer-events: none;
+    color: var(--color-text-muted);
+}
+
+.profileSelect {
+    appearance: none;
+    padding: var(--space-2) var(--space-8) var(--space-2) var(--space-3);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 200px;
+    transition: border-color var(--transition-fast);
+}
+
+.profileSelect:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.profileSelect option {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+.profileActions {
+    display: flex;
+    gap: var(--space-1);
+}
+
+.profileNameSection {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+}
+
+.profileName {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    transition: all var(--transition-fast);
+    margin: 0;
+}
+
+.profileName:hover {
+    border-color: var(--color-border);
+    background: var(--color-bg-secondary);
+}
+
+.profileNameInput {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    padding: var(--space-1) var(--space-2);
+}
+
+.profileConnectionCount {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+}
+
+.emptyProfiles {
+    text-align: center;
+    padding: var(--space-16) var(--space-4);
+}
+
+.emptyProfiles h3 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+}
+
+.emptyProfiles p {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-6);
+}
+
+/* Agent Cards List View */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-6);
+}
+
+.agentCard {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-6);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-align: left;
+    height: 100%;
+}
+
+.agentCard:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.createAgentCard {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-style: dashed;
+    background: transparent;
+    color: var(--color-text-secondary);
+}
+
+.createAgentCard:hover {
+    color: var(--color-primary);
+    background: var(--color-bg-secondary);
+}
+
+.createIcon {
+    margin-bottom: var(--space-4);
+    color: currentColor;
+}
+
+.agentCardHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.agentAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-primary);
+}
+
+.agentName {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+.agentCardBody {
+    flex: 1;
+    margin-bottom: var(--space-6);
+}
+
+.agentSnippet {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.agentCardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.agentMetaItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
 }

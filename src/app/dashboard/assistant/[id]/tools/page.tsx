@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import styles from "./tools.module.css"
+import assistantStyles from "../../assistant.module.css"
 
 // ==========================================
 // DEFINICIONES DE HERRAMIENTAS POR PROVEEDOR
@@ -80,10 +81,15 @@ interface Integration {
 // COMPONENTE PRINCIPAL
 // ==========================================
 
-export default function ToolsPage() {
+import { use } from "react"
+
+export default function ToolsPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = use(params)
     const [integrations, setIntegrations] = useState<Integration[]>([])
     const [loading, setLoading] = useState(true)
     const [updatingTool, setUpdatingTool] = useState<string | null>(null)
+
+    const router = require("next/navigation").useRouter()
 
     const loadIntegrations = useCallback(async () => {
         try {
@@ -141,11 +147,7 @@ export default function ToolsPage() {
     }
 
     return (
-        <div style={{ marginTop: "var(--space-4)" }}>
-            <p style={{ color: "var(--color-text-secondary)", marginBottom: "var(--space-6)", fontSize: "var(--font-size-sm)" }}>
-                Activa o desactiva las acciones que tu asistente puede realizar con cada integración conectada.
-            </p>
-
+        <div className={assistantStyles.section}>
             {connectedIntegrations.length === 0 ? (
                 <div className={styles.emptyState}>
                     <div className={styles.emptyIcon}>

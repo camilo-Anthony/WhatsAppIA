@@ -33,6 +33,14 @@ interface Connection {
     wabaId: string | null
     waPhoneNumberId: string | null
     tokenExpiresAt: string | null
+    assistantConfigId: string | null
+    isAssistantActive: boolean
+    assistantConfig: { id: string; name: string } | null
+}
+
+interface AssistantProfile {
+    id: string
+    name: string
 }
 
 type ConnectionType = "QR" | "OWN_ACCOUNT" | "MANAGED"
@@ -80,16 +88,20 @@ function getStatusBadge(status: string) {
 
 function ConnectionCard({
     conn,
+    profiles,
     onDelete,
     onStatusChange,
 }: {
     conn: Connection
+    profiles: AssistantProfile[]
     onDelete: (id: string) => void
     onStatusChange: () => void
 }) {
     const [qrCode, setQrCode] = useState<string | null>(null)
     const [status, setStatus] = useState(conn.status)
     const [details, setDetails] = useState(conn)
+    const [isAssistantActive, setIsAssistantActive] = useState(conn.isAssistantActive)
+    const [selectedProfileId, setSelectedProfileId] = useState<string | null>(conn.assistantConfigId)
 
     useEffect(() => {
         let interval: NodeJS.Timeout
@@ -126,6 +138,35 @@ function ConnectionCard({
             if (interval) clearInterval(interval)
         }
     }, [conn.id, conn.mode, status, qrCode, onStatusChange])
+
+    const toggleAssistant = async () => {
+        const newValue = !isAssistantActive
+        setIsAssistantActive(newValue)
+        try {
+            await fetch(`/api/connections/${conn.id}/assistant`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isAssistantActive: newValue, assistantConfigId: selectedProfileId }),
+            })
+        } catch (error) {
+            console.error("Error toggling assistant:", error)
+            setIsAssistantActive(!newValue) // revert
+        }
+    }
+
+    const changeProfile = async (profileId: string | null) => {
+        setSelectedProfileId(profileId)
+        try {
+            await fetch(`/api/connections/${conn.id}/assistant`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ assistantConfigId: profileId }),
+            })
+        } catch (error) {
+            console.error("Error changing profile:", error)
+            setSelectedProfileId(conn.assistantConfigId) // revert
+        }
+    }
 
     const statusBadge = getStatusBadge(status)
     const modeBadge = getModeBadge(details.mode)
@@ -169,6 +210,36 @@ function ConnectionCard({
                 </div>
             )}
 
+            {/* Assistant Controls */}
+            {status === "CONNECTED" && (
+                <div className={styles.assistantControls}>
+                    <div className={styles.assistantToggleRow}>
+                        <span className={styles.assistantLabel}>Asistente IA</span>
+                        <button
+                            className={`toggle ${isAssistantActive ? "toggle-on" : ""}`}
+                            onClick={toggleAssistant}
+                            title={isAssistantActive ? "Desactivar IA" : "Activar IA"}
+                        >
+                            <span className="toggle-dot" />
+                        </button>
+                    </div>
+                    {isAssistantActive && (
+                        <div className={styles.profileSelectorRow}>
+                            <select
+                                className={styles.profileSelectSmall}
+                                value={selectedProfileId || ""}
+                                onChange={(e) => changeProfile(e.target.value || null)}
+                            >
+                                <option value="">Sin perfil asignado</option>
+                                {profiles.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className={styles.cardDetails}>
                 <div className={styles.detailRow}>
                     <span>Tipo:</span>
@@ -182,24 +253,6 @@ function ConnectionCard({
                     <div className={styles.detailRow}>
                         <span>Nombre:</span>
                         <span>{details.displayName}</span>
-                    </div>
-                )}
-                {details.wabaId && (
-                    <div className={styles.detailRow}>
-                        <span>WABA ID:</span>
-                        <span className={styles.monoText}>{details.wabaId}</span>
-                    </div>
-                )}
-                {details.waPhoneNumberId && (
-                    <div className={styles.detailRow}>
-                        <span>Phone ID:</span>
-                        <span className={styles.monoText}>{details.waPhoneNumberId}</span>
-                    </div>
-                )}
-                {details.tokenExpiresAt && (
-                    <div className={styles.detailRow}>
-                        <span>Token expira:</span>
-                        <span>{new Date(details.tokenExpiresAt).toLocaleDateString("es")}</span>
                     </div>
                 )}
                 {details.lastActive && (
@@ -557,6 +610,7 @@ function PhoneRegistrationFlow({ onClose, onSuccess }: { onClose: () => void; on
 
 function ConnectionsContent() {
     const [connections, setConnections] = useState<Connection[]>([])
+    const [profiles, setProfiles] = useState<AssistantProfile[]>([])
     const [loading, setLoading] = useState(true)
     const [creating, setCreating] = useState(false)
     const [showSelector, setShowSelector] = useState(false)
@@ -578,9 +632,24 @@ function ConnectionsContent() {
         }
     }, [])
 
+    const loadProfiles = useCallback(async () => {
+        try {
+            const res = await fetch("/api/assistant/config")
+            if (res.ok) {
+                const data = await res.json()
+                if (data.profiles) {
+                    setProfiles(data.profiles.map((p: AssistantProfile) => ({ id: p.id, name: p.name })))
+                }
+            }
+        } catch (error) {
+            console.error("Error loading profiles:", error)
+        }
+    }, [])
+
     useEffect(() => {
         loadConnections()
-    }, [loadConnections])
+        loadProfiles()
+    }, [loadConnections, loadProfiles])
 
     // Handle URL params from Meta OAuth callback
     useEffect(() => {
@@ -695,6 +764,7 @@ function ConnectionsContent() {
                         <ConnectionCard
                             key={conn.id}
                             conn={conn}
+                            profiles={profiles}
                             onDelete={deleteConnection}
                             onStatusChange={loadConnections}
                         />

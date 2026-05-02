@@ -83,7 +83,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   connections   WhatsAppConnection[]
-  assistant     AssistantConfig?
+  assistants    AssistantConfig[]
   infoFields    InfoField[]
   conversations Conversation[]
   dataSources   DataSource[]
@@ -101,6 +101,11 @@ model WhatsAppConnection {
   status          ConnectionStatus @default(PENDING)
   sessionData     Json?
   lastActive      DateTime?
+  
+  // Asistente IA Específico por Conexión
+  assistantConfigId String?
+  isAssistantActive Boolean          @default(true)
+
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -111,8 +116,9 @@ model WhatsAppConnection {
   tokenExpiresAt  DateTime?        // When the access token expires
   webhookSecret   String?          // Per-connection webhook verification
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages Message[]
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages        Message[]
+  assistantConfig AssistantConfig?   @relation(fields: [assistantConfigId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([phoneNumber])
@@ -121,16 +127,18 @@ model WhatsAppConnection {
 
 model AssistantConfig {
   id             String   @id @default(cuid())
-  userId         String   @unique
+  userId         String
+  name           String   @default("Perfil Principal")
   behaviorPrompt String   @db.Text
   infoMode       InfoMode @default(SIMPLE)
   simpleInfo     String?  @db.Text
-  isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connections WhatsAppConnection[]
 
+  @@index([userId])
   @@map("assistant_configs")
 }
 
