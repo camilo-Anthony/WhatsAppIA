@@ -149,7 +149,7 @@ export default function LandingPage() {
           <div className={`${styles.ctaCard} card`}>
             <h2>Empieza a automatizar hoy</h2>
             <p>Configura tu asistente en minutos. Sin tarjeta de crédito, sin compromisos.</p>
-            <Link href="/register" className="btn btn-primary btn-lg">
+            <Link href="/register" className={`btn btn-primary btn-lg ${styles.ctaButton}`}>
               Crear cuenta gratis
             </Link>
           </div>
