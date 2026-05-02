@@ -1,13 +1,55 @@
 /**
  * Redis Connection — Shared singleton for BullMQ queues.
  * Supports TLS (Upstash) via rediss:// protocol.
+ *
+ * CIRCUIT BREAKER: Cuando Upstash excede el límite de requests,
+ * desactiva Redis COMPLETAMENTE y deja de reintentar.
+ * Todo el sistema cambia a modo emergencia (DB fallback).
  */
 
 import IORedis from "ioredis"
 
-const globalForRedis = globalThis as unknown as {
+// ==========================================
+// CIRCUIT BREAKER GLOBAL
+// ==========================================
+
+const globalCircuit = globalThis as unknown as {
+    redisCircuitOpen: boolean | undefined
     redisConnection: IORedis | undefined
 }
+
+/** true = Redis deshabilitado (circuito abierto) */
+let circuitOpen = globalCircuit.redisCircuitOpen ?? false
+
+/** Marca Redis como muerto — todo el sistema usa DB fallback */
+export function tripCircuitBreaker(reason: string) {
+    if (!circuitOpen) {
+        console.warn(`[Redis] CIRCUIT BREAKER ABIERTO: ${reason}`)
+        console.warn("[Redis] Todo el tráfico se redirige a DB (modo emergencia)")
+        circuitOpen = true
+        globalCircuit.redisCircuitOpen = true
+
+        // Desconectar la instancia existente para que deje de reintentar
+        try {
+            if (globalCircuit.redisConnection) {
+                globalCircuit.redisConnection.disconnect()
+            }
+        } catch { /* ignore */ }
+    }
+}
+
+/** Detecta si un error es de límite de Upstash */
+function isUpstashLimitError(err: unknown): boolean {
+    if (err instanceof Error) {
+        return err.message.includes("limit exceeded") ||
+               err.message.includes("max requests")
+    }
+    return false
+}
+
+// ==========================================
+// REDIS CONFIG
+// ==========================================
 
 function parseRedisUrl() {
     const url = process.env.REDIS_URL || "redis://localhost:6379"
@@ -23,6 +65,10 @@ function parseRedisUrl() {
     }
 }
 
+// ==========================================
+// CONEXIÓN SINGLETON
+// ==========================================
+
 function createRedisConnection(): IORedis {
     const config = parseRedisUrl()
 
@@ -35,15 +81,32 @@ function createRedisConnection(): IORedis {
         username: config.username,
         maxRetriesPerRequest: null,
         enableReadyCheck: false,
+        lazyConnect: true, // No conectar al crear — conectar solo cuando se necesite
         ...(config.useTls ? { tls: {} } : {}),
         retryStrategy(times: number) {
-            const delay = Math.min(times * 50, 2000)
+            // Si el circuit breaker está abierto, NO reintentar
+            if (circuitOpen) return null
+
+            // Máximo 5 reintentos, luego parar
+            if (times > 5) {
+                console.error("[Redis] Máximo de reintentos alcanzado, deteniendo")
+                return null
+            }
+
+            const delay = Math.min(times * 500, 5000)
             return delay
         },
     })
 
     connection.on("error", (err) => {
-        console.error("[Redis] Error de conexión:", err.message)
+        if (isUpstashLimitError(err)) {
+            tripCircuitBreaker("Upstash max requests limit exceeded")
+            return
+        }
+        // Solo logear 1 vez, no spamear
+        if (!circuitOpen) {
+            console.error("[Redis] Error:", err.message)
+        }
     })
 
     connection.on("connect", () => {
@@ -53,12 +116,16 @@ function createRedisConnection(): IORedis {
     return connection
 }
 
-export const redis = globalForRedis.redisConnection ?? createRedisConnection()
+export const redis = globalCircuit.redisConnection ?? createRedisConnection()
+globalCircuit.redisConnection = redis
 
-if (process.env.NODE_ENV !== "production") globalForRedis.redisConnection = redis
+// ==========================================
+// CONFIG PARA BULLMQ (con circuit breaker)
+// ==========================================
 
 /**
  * Returns a Redis connection config object for use with BullMQ Queue/Worker constructors.
+ * Incluye retryStrategy con circuit breaker.
  */
 export function getRedisConfig() {
     const config = parseRedisUrl()
@@ -69,21 +136,34 @@ export function getRedisConfig() {
         password: config.password,
         username: config.username,
         maxRetriesPerRequest: null as null,
+        lazyConnect: true,
         ...(config.useTls ? { tls: {} } : {}),
+        retryStrategy(times: number) {
+            if (circuitOpen) return null
+            if (times > 5) return null
+            return Math.min(times * 500, 5000)
+        },
     }
 }
 
+// ==========================================
+// DISPONIBILIDAD
+// ==========================================
+
 /**
  * Verifica si Redis está disponible sin lanzar excepciones.
+ * Retorna false inmediatamente si el circuit breaker está abierto.
  */
 export async function isRedisAvailable(): Promise<boolean> {
+    // Fast path: circuit breaker abierto
+    if (circuitOpen) return false
+
     try {
         await redis.ping()
         return true
     } catch (err) {
-        // Tratar errores de límite de Upstash como "no disponible"
-        if (err instanceof Error && err.message.includes("limit exceeded")) {
-            console.warn("[Redis] Límite de solicitudes excedido (Upstash)")
+        if (isUpstashLimitError(err)) {
+            tripCircuitBreaker("Upstash limit exceeded en ping")
         }
         return false
     }

@@ -13,7 +13,7 @@ class WhatsAppManager {
         // Inicializar workers de cola (importación dinámica para evitar init durante build)
         try {
             const { initializeQueueWorkers } = await import("../queue/worker")
-            initializeQueueWorkers()
+            await initializeQueueWorkers()
         } catch (error) {
             console.error("[WA Manager] Error inicializando workers de cola:", error)
         }
