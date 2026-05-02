@@ -1,24 +1,35 @@
-/**
- * Retry Cron — Escanea queue_jobs pendientes y los re-encola cuando Redis vuelve.
- * 
- * Ejecutar periódicamente (cada 30s-60s) desde el worker orchestrator.
- * Solo procesa jobs cuyo nextRetryAt ya pasó y no han agotado intentos.
- */
-
 import { prisma } from "../db"
 import { isRedisAvailable } from "./redis"
 
 const BATCH_SIZE = 50
 
 /**
- * Re-encola jobs pendientes en DB cuando Redis está disponible.
- * Implementa backoff exponencial: 2s, 8s, 32s, 128s...
+ * Procesa un job directamente llamando a la lógica de negocio,
+ * puenteando BullMQ cuando Redis no está disponible.
+ */
+async function processJobDirectly(job: any) {
+    const queue = job.queue
+    const payload = job.payload
+
+    if (queue === "incoming") {
+        const { handleIncomingMessage } = await import("./incoming")
+        await handleIncomingMessage(payload)
+    } else if (queue === "ai-processing") {
+        const { handleAIProcessing } = await import("./ai-processing")
+        await handleAIProcessing(payload)
+    } else if (queue === "outgoing") {
+        const { handleOutgoingMessage } = await import("./outgoing")
+        await handleOutgoingMessage(payload)
+    } else {
+        throw new Error(`Queue ${queue} not supported for direct processing`)
+    }
+}
+
+/**
+ * Re-encola jobs pendientes o los procesa directamente si Redis está caído.
  */
 export async function retryPendingJobs(): Promise<number> {
-    // No intentar si Redis sigue caído
-    if (!(await isRedisAvailable())) {
-        return 0
-    }
+    const isRedisUp = await isRedisAvailable()
 
     const pending = await prisma.queueJob.findMany({
         where: {
@@ -32,6 +43,7 @@ export async function retryPendingJobs(): Promise<number> {
     if (pending.length === 0) return 0
 
     let processed = 0
+    console.log(`[RetryCron] Analizando ${pending.length} jobs (Redis: ${isRedisUp ? "OK" : "DOWN"})`)
 
     for (const job of pending) {
         // Verificar que no ha agotado intentos
@@ -44,21 +56,47 @@ export async function retryPendingJobs(): Promise<number> {
         }
 
         try {
-            const incoming = await import("./incoming")
-            await incoming.getIncomingQueue().add("retry", job.payload as never)
+            if (isRedisUp) {
+                // MODO NORMAL: Enviar a Redis
+                const incoming = await import("./incoming")
+                // Determinamos la cola correcta basado en el campo 'queue' del job
+                if (job.queue === "incoming") {
+                    const { getIncomingQueue } = await import("./incoming")
+                    await getIncomingQueue().add("retry", job.payload as any)
+                } else if (job.queue === "ai-processing") {
+                    const { getAIProcessingQueue } = await import("./ai-processing")
+                    await getAIProcessingQueue().add("retry", job.payload as any)
+                } else {
+                    const { getOutgoingQueue } = await import("./outgoing")
+                    await getOutgoingQueue().add("retry", job.payload as any)
+                }
 
-            await prisma.queueJob.update({
-                where: { id: job.id },
-                data: {
-                    status: "processing",
-                    attempts: { increment: 1 },
-                },
-            })
+                await prisma.queueJob.update({
+                    where: { id: job.id },
+                    data: {
+                        status: "completed", // En modo normal, el encolado exitoso cuenta como completado para la DB
+                        attempts: { increment: 1 },
+                    },
+                })
+            } else {
+                // MODO EMERGENCIA: Procesar directamente
+                console.log(`[EmergencyMode] Procesando job ${job.id} directamente desde DB`)
+                await processJobDirectly(job)
+
+                await prisma.queueJob.update({
+                    where: { id: job.id },
+                    data: {
+                        status: "completed",
+                        attempts: { increment: 1 },
+                    },
+                })
+            }
 
             processed++
         } catch (err) {
-            // Aún no puede encolar — calcular backoff exponencial
-            const delay = Math.pow(4, job.attempts) * 2000 // 2s, 8s, 32s, 128s
+            console.error(`[RetryCron] Error procesando job ${job.id}:`, err)
+            // Backoff exponencial
+            const delay = Math.pow(4, job.attempts) * 2000 
             const nextRetry = new Date(Date.now() + delay)
             const newAttempts = job.attempts + 1
 
@@ -75,7 +113,7 @@ export async function retryPendingJobs(): Promise<number> {
     }
 
     if (processed > 0) {
-        console.log(`[RetryCron] Re-encolados ${processed}/${pending.length} jobs`)
+        console.log(`[RetryCron] ${isRedisUp ? "Re-encolados" : "Procesados directamente"} ${processed}/${pending.length} jobs`)
     }
 
     return processed
@@ -87,18 +125,18 @@ export async function retryPendingJobs(): Promise<number> {
 
 let retryInterval: ReturnType<typeof setInterval> | null = null
 
-export function startRetryCron(intervalMs = 30_000) {
+export function startRetryCron(intervalMs = 15_000) { // Bajamos a 15s para modo emergencia
     if (retryInterval) return
 
     retryInterval = setInterval(async () => {
         try {
             await retryPendingJobs()
         } catch (err) {
-            console.error("[RetryCron] Error:", err)
+            console.error("[RetryCron] Error fatal:", err)
         }
     }, intervalMs)
 
-    console.log(`[RetryCron] Iniciado — intervalo: ${intervalMs / 1000}s`)
+    console.log(`[RetryCron] Iniciado (Emergencia habilitada) — intervalo: ${intervalMs / 1000}s`)
 }
 
 export function stopRetryCron() {

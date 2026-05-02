@@ -47,13 +47,13 @@ export function getIncomingQueue(): Queue<IncomingMessageJob> {
 export const incomingQueue = { add: (...args: Parameters<Queue<IncomingMessageJob>["add"]>) => getIncomingQueue().add(...args) }
 
 // ==========================================
-// PROCESADOR
+// LÓGICA DE NEGOCIO (Extraída para modo emergencia)
 // ==========================================
 
-async function processIncomingJob(job: Job<IncomingMessageJob>) {
-    const { connectionId, userId, senderPhone, senderName, messageContent, remoteJid } = job.data
+export async function handleIncomingMessage(data: IncomingMessageJob) {
+    const { connectionId, userId, senderPhone, senderName, messageContent, remoteJid } = data
 
-    console.log(`[Cola:Entrante] Procesando mensaje de +${senderPhone}`)
+    console.log(`[Queue:Incoming] Processing message from +${senderPhone}`)
 
     let conversation = await prisma.conversation.findFirst({
         where: { userId, clientPhone: senderPhone },
@@ -79,9 +79,8 @@ async function processIncomingJob(job: Job<IncomingMessageJob>) {
         },
     })
 
-    const { getAIProcessingQueue } = await import("./ai-processing")
-    const aiQueue = getAIProcessingQueue()
-    await aiQueue.add("ai-process", {
+    const { dispatch } = await import("./dispatcher")
+    await dispatch("ai-processing", {
         userId,
         connectionId,
         conversationId: conversation.id,
@@ -90,7 +89,16 @@ async function processIncomingJob(job: Job<IncomingMessageJob>) {
         remoteJid,
     })
 
-    console.log(`[Cola:Entrante] Mensaje guardado y encolado para IA — conversación: ${conversation.id}`)
+    console.log(`[Queue:Incoming] Message saved and dispatched to AI — conversation: ${conversation.id}`)
+    return conversation
+}
+
+// ==========================================
+// PROCESADOR (BullMQ Wrapper)
+// ==========================================
+
+async function processIncomingJob(job: Job<IncomingMessageJob>) {
+    return handleIncomingMessage(job.data)
 }
 
 // ==========================================

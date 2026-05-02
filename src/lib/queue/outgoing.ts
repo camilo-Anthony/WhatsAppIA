@@ -69,13 +69,13 @@ async function waitForRateLimit(connectionId: string) {
 }
 
 // ==========================================
-// PROCESADOR
+// LÓGICA DE NEGOCIO (Extraída para modo emergencia)
 // ==========================================
 
-async function processOutgoingJob(job: Job<OutgoingMessageJob>) {
-    const { connectionId, recipientJid, recipientPhone, text } = job.data
+export async function handleOutgoingMessage(data: OutgoingMessageJob) {
+    const { connectionId, recipientJid, recipientPhone, text } = data
 
-    console.log(`[Cola:Envío] Enviando mensaje a ${recipientPhone}`)
+    console.log(`[Queue:Outgoing] Sending message to ${recipientPhone}`)
 
     await waitForRateLimit(connectionId)
 
@@ -84,7 +84,7 @@ async function processOutgoingJob(job: Job<OutgoingMessageJob>) {
     })
 
     if (!connection) {
-        console.error(`[Cola:Envío] Conexión ${connectionId} no encontrada`)
+        console.error(`[Queue:Outgoing] Connection ${connectionId} not found`)
         return
     }
 
@@ -93,14 +93,14 @@ async function processOutgoingJob(job: Job<OutgoingMessageJob>) {
         const client = whatsappManager.getClient(connectionId)
 
         if (!client) {
-            console.error(`[Cola:Envío] Cliente Baileys no encontrado para ${connectionId}`)
+            console.error(`[Queue:Outgoing] Baileys client not found for ${connectionId}`)
             throw new Error("CLIENT_NOT_FOUND")
         }
 
         await client.sendMessage(recipientJid, text)
     } else {
         if (!connection.waPhoneNumberId || !connection.accessToken) {
-            console.error(`[Cola:Envío] Conexión ${connectionId} sin credenciales Cloud API`)
+            console.error(`[Queue:Outgoing] Connection ${connectionId} lacks Cloud API credentials`)
             return
         }
 
@@ -109,7 +109,7 @@ async function processOutgoingJob(job: Job<OutgoingMessageJob>) {
                 where: { id: connectionId },
                 data: { status: "TOKEN_EXPIRED" },
             })
-            console.error(`[Cola:Envío] Token expirado para conexión ${connectionId}`)
+            console.error(`[Queue:Outgoing] Token expired for connection ${connectionId}`)
             return
         }
 
@@ -126,7 +126,16 @@ async function processOutgoingJob(job: Job<OutgoingMessageJob>) {
         data: { lastActive: new Date() },
     })
 
-    console.log(`[Cola:Envío] Mensaje enviado a ${recipientPhone}`)
+    console.log(`[Queue:Outgoing] Message sent to ${recipientPhone}`)
+    return true
+}
+
+// ==========================================
+// PROCESADOR (BullMQ Wrapper)
+// ==========================================
+
+async function processOutgoingJob(job: Job<OutgoingMessageJob>) {
+    return handleOutgoingMessage(job.data)
 }
 
 // ==========================================

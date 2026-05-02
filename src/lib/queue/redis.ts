@@ -80,7 +80,11 @@ export async function isRedisAvailable(): Promise<boolean> {
     try {
         await redis.ping()
         return true
-    } catch {
+    } catch (err) {
+        // Tratar errores de límite de Upstash como "no disponible"
+        if (err instanceof Error && err.message.includes("limit exceeded")) {
+            console.warn("[Redis] Límite de solicitudes excedido (Upstash)")
+        }
         return false
     }
 }

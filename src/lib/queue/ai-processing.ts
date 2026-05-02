@@ -39,16 +39,15 @@ export function getAIProcessingQueue(): Queue<AIProcessingJob> {
 export const aiProcessingQueue = { add: (...args: Parameters<Queue<AIProcessingJob>["add"]>) => getAIProcessingQueue().add(...args) }
 
 // ==========================================
-// PROCESADOR
+// LÓGICA DE NEGOCIO (Extraída para modo emergencia)
 // ==========================================
 
-async function processAIJob(job: Job<AIProcessingJob>) {
-    const { userId, connectionId, conversationId, clientPhone, messageContent, remoteJid } = job.data
+export async function handleAIProcessing(data: AIProcessingJob) {
+    const { userId, connectionId, conversationId, clientPhone, messageContent, remoteJid } = data
 
-    console.log(`[Cola:IA] Procesando solicitud IA para +${clientPhone}`)
+    console.log(`[Queue:AI] Processing AI request for +${clientPhone}`)
 
     try {
-        // Usar el agent pipeline determinístico (ZeroClaw-pattern)
         const { agentPipeline } = await import("@/lib/ai/agent/agent-pipeline")
 
         const result = await agentPipeline({
@@ -73,11 +72,10 @@ async function processAIJob(job: Job<AIProcessingJob>) {
             data: { updatedAt: new Date() },
         })
 
-        const { getOutgoingQueue } = await import("./outgoing")
-        const outQueue = getOutgoingQueue()
+        const { dispatch } = await import("./dispatcher")
         const recipientJid = remoteJid || `${clientPhone}@s.whatsapp.net`
 
-        await outQueue.add("send-message", {
+        await dispatch("outgoing", {
             connectionId,
             recipientJid,
             recipientPhone: clientPhone,
@@ -87,27 +85,27 @@ async function processAIJob(job: Job<AIProcessingJob>) {
 
         const toolsInfo = result.toolsUsed.length > 0 ? ` | tools: ${result.toolsUsed.join(", ")}` : ""
         console.log(
-            `[Cola:IA] Respuesta generada para +${clientPhone}: "${result.response.substring(0, 80)}..." (${result.tokensUsed.total} tokens, ${result.iterations} iter${toolsInfo})`
+            `[Queue:AI] Response generated for +${clientPhone}: "${result.response.substring(0, 80)}..." (${result.tokensUsed.total} tokens${toolsInfo})`
         )
+        return result
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Error desconocido"
 
         if (errorMessage === "ASSISTANT_NOT_CONFIGURED") {
-            console.log(`[Cola:IA] Asistente no configurado para usuario ${userId}`)
+            console.log(`[Queue:AI] Assistant not configured for user ${userId}`)
             return
         }
 
         if (errorMessage === "ASSISTANT_INACTIVE") {
-            console.log(`[Cola:IA] Asistente inactivo para usuario ${userId}`)
+            console.log(`[Queue:AI] Assistant inactive for user ${userId}`)
             return
         }
 
         if (errorMessage === "RATE_LIMITED") {
-            console.log(`[Cola:IA] Rate limit de Groq API`)
-            const { getOutgoingQueue } = await import("./outgoing")
-            const outQueue = getOutgoingQueue()
+            console.log(`[Queue:AI] Rate limit hit (Groq API)`)
+            const { dispatch } = await import("./dispatcher")
             const recipientJidRateLimit = remoteJid || `${clientPhone}@s.whatsapp.net`
-            await outQueue.add("send-message", {
+            await dispatch("outgoing", {
                 connectionId,
                 recipientJid: recipientJidRateLimit,
                 recipientPhone: clientPhone,
@@ -117,9 +115,17 @@ async function processAIJob(job: Job<AIProcessingJob>) {
             throw error
         }
 
-        console.error(`[Cola:IA] Error procesando mensaje:`, error)
+        console.error(`[Queue:AI] Error processing message:`, error)
         throw error
     }
+}
+
+// ==========================================
+// PROCESADOR (BullMQ Wrapper)
+// ==========================================
+
+async function processAIJob(job: Job<AIProcessingJob>) {
+    return handleAIProcessing(job.data)
 }
 
 // ==========================================
