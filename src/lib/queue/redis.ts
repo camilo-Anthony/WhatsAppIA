@@ -150,18 +150,34 @@ export function getRedisConfig() {
 // DISPONIBILIDAD
 // ==========================================
 
+/** Cache para no spamear pings a Upstash */
+let _lastPingResult: boolean | null = null
+let _lastPingTime = 0
+const PING_CACHE_MS = 60_000 // Cache resultado por 60s
+
 /**
  * Verifica si Redis está disponible sin lanzar excepciones.
  * Retorna false inmediatamente si el circuit breaker está abierto.
+ * Cache el resultado para no desperdiciar requests de Upstash.
  */
 export async function isRedisAvailable(): Promise<boolean> {
-    // Fast path: circuit breaker abierto
+    // Fast path: circuit breaker abierto — NUNCA hacer ping
     if (circuitOpen) return false
+
+    // Cache: no re-verificar si ya comprobamos recientemente
+    const now = Date.now()
+    if (_lastPingResult !== null && (now - _lastPingTime) < PING_CACHE_MS) {
+        return _lastPingResult
+    }
 
     try {
         await redis.ping()
+        _lastPingResult = true
+        _lastPingTime = now
         return true
     } catch (err) {
+        _lastPingResult = false
+        _lastPingTime = now
         if (isUpstashLimitError(err)) {
             tripCircuitBreaker("Upstash limit exceeded en ping")
         }

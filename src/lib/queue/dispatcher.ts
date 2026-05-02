@@ -1,5 +1,13 @@
+/**
+ * Dispatcher Central — Encola jobs en Redis o DB.
+ *
+ * FIX: Cuando Redis falla, activa el circuit breaker para que
+ *      TODOS los siguientes dispatches vayan directo a DB sin
+ *      desperdiciar requests en Upstash.
+ */
+
 import { prisma } from "../db"
-import { isRedisAvailable } from "./redis"
+import { isRedisAvailable, tripCircuitBreaker } from "./redis"
 import { NormalizedMessage } from "../whatsapp/provider"
 
 export type QueueName = "incoming" | "ai-processing" | "outgoing"
@@ -11,6 +19,16 @@ export type QueueName = "incoming" | "ai-processing" | "outgoing"
 const DEDUP_TTL_SECONDS = 3600 // 1 hora
 
 async function isDuplicate(messageId: string): Promise<boolean> {
+    // Si Redis no está disponible, ir directo a DB
+    const redisUp = await isRedisAvailable()
+    if (!redisUp) {
+        const existing = await prisma.message.findFirst({
+            where: { externalId: messageId },
+            select: { id: true },
+        })
+        return !!existing
+    }
+
     try {
         const { redis } = await import("./redis")
         const exists = await redis.get(`msg:dedup:${messageId}`)
@@ -18,6 +36,7 @@ async function isDuplicate(messageId: string): Promise<boolean> {
         await redis.set(`msg:dedup:${messageId}`, "1", "EX", DEDUP_TTL_SECONDS)
         return false
     } catch (err) {
+        tripCircuitBreaker("dedup operation failed")
         // Fallback a DB
         const existing = await prisma.message.findFirst({
             where: { externalId: messageId },
@@ -67,8 +86,6 @@ export async function dispatch(queueNameOrMessage: QueueName | NormalizedMessage
 
     if (isRedisUp) {
         try {
-            console.log(`[Dispatcher] Encolando en Redis: ${queue}`)
-            
             if (queue === "incoming") {
                 const { getIncomingQueue } = await import("./incoming")
                 await getIncomingQueue().add("incoming-message", data)
@@ -82,12 +99,14 @@ export async function dispatch(queueNameOrMessage: QueueName | NormalizedMessage
             
             return { success: true, mode: "redis" }
         } catch (err) {
-            console.error(`[Dispatcher] Fallo al encolar en Redis, reintentando via DB:`, err)
+            // ACTIVAR CIRCUIT BREAKER para que no se vuelva a intentar Redis
+            tripCircuitBreaker("BullMQ enqueue failed")
+            console.warn(`[Dispatcher] Redis falló, circuit breaker activado. Guardando en DB.`)
         }
     }
 
     // FALLBACK A BASE DE DATOS (Emergencia)
-    console.log(`[Dispatcher] MODO EMERGENCIA: Guardando job en DB para ${queue}`)
+    console.log(`[Dispatcher] MODO DB: Guardando job para ${queue}`)
     
     await prisma.queueJob.create({
         data: {
