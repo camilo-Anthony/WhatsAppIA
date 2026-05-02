@@ -17,7 +17,7 @@ import path from "node:path"
 import fs from "node:fs"
 import { prisma } from "../db"
 import { handleBaileysMessage } from "./listener"
-import { dispatch } from "./dispatcher"
+import { dispatch } from "@/lib/queue/dispatcher"
 
 export class WhatsAppClient {
     public connectionId: string

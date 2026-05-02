@@ -1,6 +1,35 @@
-import { NormalizedMessage } from "./provider"
+import { prisma } from "../db"
+import { isRedisAvailable } from "./redis"
+import { NormalizedMessage } from "../whatsapp/provider"
 
 export type QueueName = "incoming" | "ai-processing" | "outgoing"
+
+// ==========================================
+// DEDUPLICACIÓN
+// ==========================================
+
+const DEDUP_TTL_SECONDS = 3600 // 1 hora
+
+async function isDuplicate(messageId: string): Promise<boolean> {
+    try {
+        const { redis } = await import("./redis")
+        const exists = await redis.get(`msg:dedup:${messageId}`)
+        if (exists) return true
+        await redis.set(`msg:dedup:${messageId}`, "1", "EX", DEDUP_TTL_SECONDS)
+        return false
+    } catch (err) {
+        // Fallback a DB
+        const existing = await prisma.message.findFirst({
+            where: { externalId: messageId },
+            select: { id: true },
+        })
+        return !!existing
+    }
+}
+
+// ==========================================
+// DISPATCHER CENTRAL
+// ==========================================
 
 /**
  * Encola un trabajo. Si Redis no está disponible, lo guarda en la DB para el RetryCron.
@@ -14,7 +43,13 @@ export async function dispatch(queueNameOrMessage: QueueName | NormalizedMessage
         queue = queueNameOrMessage
         data = payload
     } else {
-        // Mapeo automático de mensaje normalizado a la cola entrante
+        // 1. Deduplicar mensajes de WhatsApp
+        if (await isDuplicate(queueNameOrMessage.id)) {
+            console.log(`[Dispatcher] Duplicado ignorado: ${queueNameOrMessage.id}`)
+            return { success: true, mode: "ignored_duplicate" }
+        }
+
+        // 2. Mapeo automático de mensaje normalizado a la cola entrante
         queue = "incoming"
         data = {
             connectionId: queueNameOrMessage.connectionId,
@@ -51,7 +86,7 @@ export async function dispatch(queueNameOrMessage: QueueName | NormalizedMessage
         }
     }
 
-    // FALLBACK A BASE DE DATOS
+    // FALLBACK A BASE DE DATOS (Emergencia)
     console.log(`[Dispatcher] MODO EMERGENCIA: Guardando job en DB para ${queue}`)
     
     await prisma.queueJob.create({

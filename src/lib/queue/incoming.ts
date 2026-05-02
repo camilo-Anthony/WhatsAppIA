@@ -5,7 +5,8 @@
 
 import { Queue, Worker, Job } from "bullmq"
 import { getRedisConfig } from "./redis"
-import { prisma } from "@/lib/db"
+import { prisma } from "../db"
+import { dispatch } from "@/lib/queue/dispatcher"
 
 // ==========================================
 // TIPOS
@@ -79,7 +80,6 @@ export async function handleIncomingMessage(data: IncomingMessageJob) {
         },
     })
 
-    const { dispatch } = await import("./dispatcher")
     await dispatch("ai-processing", {
         userId,
         connectionId,

@@ -1,6 +1,7 @@
 import { Queue, Worker, Job } from "bullmq"
 import { getRedisConfig } from "./redis"
-import { prisma } from "@/lib/db"
+import { prisma } from "../db"
+import { dispatch } from "@/lib/queue/dispatcher"
 
 // ==========================================
 // TIPOS
@@ -72,7 +73,6 @@ export async function handleAIProcessing(data: AIProcessingJob) {
             data: { updatedAt: new Date() },
         })
 
-        const { dispatch } = await import("./dispatcher")
         const recipientJid = remoteJid || `${clientPhone}@s.whatsapp.net`
 
         await dispatch("outgoing", {
@@ -103,7 +103,6 @@ export async function handleAIProcessing(data: AIProcessingJob) {
 
         if (errorMessage === "RATE_LIMITED") {
             console.log(`[Queue:AI] Rate limit hit (Groq API)`)
-            const { dispatch } = await import("./dispatcher")
             const recipientJidRateLimit = remoteJid || `${clientPhone}@s.whatsapp.net`
             await dispatch("outgoing", {
                 connectionId,
