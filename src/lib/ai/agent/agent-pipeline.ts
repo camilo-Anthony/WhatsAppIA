@@ -55,12 +55,30 @@ import {
 export async function agentPipeline(
     options: AgentPipelineOptions
 ): Promise<AgentPipelineResult> {
-    const { userId, connectionId, conversationId, clientPhone, messageContent } = options
+    const { userId, connectionId, conversationId, clientPhone, messageContent: rawMessage } = options
     const startTime = Date.now()
     const steps: AgentStep[] = []
     const toolsUsed: string[] = []
     let totalTokens = { prompt: 0, completion: 0, total: 0 }
     let stepCounter = 0
+
+    // ── 0. VALIDACIÓN DE ENTRADA ─────────────────────────────
+
+    // Mensajes vacíos o solo espacios/emojis sin texto útil
+    const trimmedMessage = rawMessage?.trim() || ""
+    if (trimmedMessage.length === 0) {
+        return errorResult(
+            "Por ahora solo puedo leer mensajes de texto. ¿En qué te puedo ayudar?",
+            startTime,
+            steps
+        )
+    }
+
+    // Truncar mensajes extremadamente largos (prevenir context overflow)
+    const MAX_MESSAGE_LENGTH = 2000
+    const messageContent = trimmedMessage.length > MAX_MESSAGE_LENGTH
+        ? trimmedMessage.substring(0, MAX_MESSAGE_LENGTH) + "..."
+        : trimmedMessage
 
     try {
         // ── 1. CARGAR CONFIG + TOOLS + ESTADO ────────────────────

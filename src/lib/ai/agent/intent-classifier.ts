@@ -126,9 +126,11 @@ export async function classifyIntent(
 export function quickClassify(message: string): ClassificationResult | null {
     const lower = message.toLowerCase().trim()
 
-    // Saludos obvios (no necesitan LLM)
-    const greetings = ["hola", "hi", "hello", "buenos días", "buenas tardes", "buenas noches", "hey", "buen día"]
-    if (greetings.some((g) => lower === g || lower.startsWith(g + " ") || lower.startsWith(g + ","))) {
+    // Saludos puros (exact match o saludo + puntuación) — no compound messages
+    const greetings = ["hola", "hi", "hello", "buenos días", "buenas tardes", "buenas noches", "hey", "buen día", "buenas"]
+    // Normalizar: quitar puntuación final
+    const normalized = lower.replace(/[!.,?¿¡]+$/g, "").trim()
+    if (greetings.includes(normalized)) {
         return {
             intent: "greeting",
             confidence: 0.95,

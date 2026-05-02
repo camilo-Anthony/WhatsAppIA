@@ -89,7 +89,7 @@ export function classifyError(error: unknown): AgentError {
         type: "UNKNOWN",
         message: error instanceof Error ? error.message : "Unknown error",
         retryable: false,
-        userMessage: `Ocurrió un error inesperado: ${error instanceof Error ? error.stack || error.message : String(error)}`,
+        userMessage: "Ocurrió un error inesperado. Por favor intenta de nuevo en unos momentos.",
     }
 }
 
