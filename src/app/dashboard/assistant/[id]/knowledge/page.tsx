@@ -45,7 +45,7 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
                 const draft = JSON.parse(draftStr)
                 setConfig({
                     id: "new",
-                    infoMode: draft.infoMode || "SIMPLE",
+                    infoMode: (draft.infoMode as "SIMPLE" | "ADVANCED") || "SIMPLE",
                     simpleInfo: draft.simpleInfo || ""
                 })
                 if (draft.infoFields) {
@@ -57,7 +57,7 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
                     id: "new",
                     name: "Nuevo Agente",
                     behaviorPrompt: "Eres un asistente virtual amable y profesional. Respondes de forma clara y concisa.",
-                    infoMode: "SIMPLE",
+                    infoMode: "SIMPLE" as const,
                     simpleInfo: ""
                 }
                 setConfig({

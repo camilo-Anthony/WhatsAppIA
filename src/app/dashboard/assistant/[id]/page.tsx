@@ -48,7 +48,7 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
             if (draft) {
                 setProfile(JSON.parse(draft))
             } else {
-                const initialDraft = {
+                const initialDraft: AssistantProfile = {
                     id: "new",
                     name: "Nuevo Agente",
                     behaviorPrompt: "Eres un asistente virtual amable y profesional. Respondes de forma clara y concisa.",
