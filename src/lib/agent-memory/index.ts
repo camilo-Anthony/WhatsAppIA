@@ -1,9 +1,7 @@
 /**
  * Agent Memory — API pública para memoria del agente.
  * 
- * - short-term: Redis (TTL 24h) para contexto de sesión
- * - long-term: PostgreSQL para preferencias y hechos persistentes
- * 
+ * Memoria persistente en PostgreSQL para preferencias y hechos del usuario.
  * Límite: 20 memorias más relevantes por consulta.
  */
 
@@ -138,49 +136,4 @@ export async function decayMemories(userId: string): Promise<void> {
     await prisma.agentMemory.deleteMany({
         where: { userId, score: { lt: 0.1 } },
     })
-}
-
-// ==========================================
-// SHORT-TERM MEMORY (Redis)
-// ==========================================
-
-const SHORT_TERM_TTL = 86400 // 24 horas
-
-/**
- * Guarda un dato temporal en Redis (se pierde después de 24h).
- * Útil para contexto de sesión: "el usuario estaba preguntando por..."
- */
-export async function setShortTermMemory(
-    userId: string,
-    phone: string,
-    key: string,
-    value: string
-): Promise<void> {
-    try {
-        const { redis } = await import("@/lib/queue/redis")
-        await redis.set(
-            `memory:${userId}:${phone}:${key}`,
-            value,
-            "EX",
-            SHORT_TERM_TTL
-        )
-    } catch {
-        // Redis no disponible — silently fail para short-term
-    }
-}
-
-/**
- * Recupera un dato temporal de Redis.
- */
-export async function getShortTermMemory(
-    userId: string,
-    phone: string,
-    key: string
-): Promise<string | null> {
-    try {
-        const { redis } = await import("@/lib/queue/redis")
-        return await redis.get(`memory:${userId}:${phone}:${key}`)
-    } catch {
-        return null
-    }
 }

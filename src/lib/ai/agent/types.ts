@@ -55,7 +55,7 @@ export type ConversationState =
     | "confirming"       // Mostrando resumen, esperando sí/no
     | "executing"        // Ejecutando tool, generando respuesta
 
-/** Contexto persistido en Redis para cada conversación */
+/** Contexto persistido en PostgreSQL para cada conversación */
 export interface ConversationContext {
     userId: string
     contactPhone: string
@@ -227,8 +227,7 @@ export const LOOP_DETECTOR_WINDOW_SIZE = 20
 /** Repeticiones antes de escalar */
 export const LOOP_DETECTOR_MAX_REPEATS = 3
 
-/** TTL del estado de conversación en Redis (30 min) */
-export const CONVERSATION_STATE_TTL_SECONDS = 1800
+
 
 /** Context window de Llama 3.3 70B */
 export const MODEL_CONTEXT_WINDOW = 128_000
