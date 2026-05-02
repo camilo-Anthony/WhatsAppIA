@@ -22,7 +22,7 @@ function buildClassificationPrompt(
     tools: ToolSpec[],
     conversationState: ConversationContext
 ): string {
-    const toolList = tools.map((t) => `- ${t.name}: ${t.description}`).join("\n")
+    const toolList = tools.map((t) => `- ${t.name}: ${t.description}\n  Parámetros requeridos: ${JSON.stringify(t.parameters)}`).join("\n")
     const slotInfo = Object.keys(conversationState.collectedSlots).length > 0
         ? `\nDatos ya recolectados: ${JSON.stringify(conversationState.collectedSlots)}`
         : ""

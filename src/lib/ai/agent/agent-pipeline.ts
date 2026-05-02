@@ -285,8 +285,10 @@ export async function agentPipeline(
         }
 
         // 7c. Tool action → verificar slots y ejecutar/recolectar
-        const matchedTool = toolSpecs.find((t) => t.name === intent)
+        const matchedTool = toolSpecs.find((t) => t.name === intent || t.name.endsWith(`__${intent}`))
         if (matchedTool) {
+            // Reasignar intent al nombre real de la tool (con prefijo) por si el LLM lo omitió
+            const actualIntent = matchedTool.name;
             // Merge slots extraídos
             const allSlots = { ...convState.collectedSlots, ...extractedSlots }
             const missing = classification.missingSlots
@@ -294,7 +296,7 @@ export async function agentPipeline(
             if (missing.length > 0) {
                 // Faltan datos → transicionar a collecting_slots
                 await transitionState(userId, clientPhone, "collecting_slots", {
-                    pendingIntent: intent,
+                    pendingIntent: actualIntent,
                     collectedSlots: allSlots,
                     missingSlots: missing,
                 })
@@ -302,7 +304,7 @@ export async function agentPipeline(
                 // Preguntar por el primer slot faltante
                 return await askForSlot(
                     missing[0],
-                    intent,
+                    actualIntent,
                     allSlots,
                     finalMessages,
                     startTime,
@@ -313,13 +315,13 @@ export async function agentPipeline(
             }
 
             // Todos los slots presentes → confirmar
-            const isReadOnly = isReadOnlyTool(intent)
+            const isReadOnly = isReadOnlyTool(actualIntent)
 
             if (isReadOnly) {
                 // Read-only tools se ejecutan directo
                 const execResult = await executeToolAction(
                     userId,
-                    intent,
+                    actualIntent,
                     allSlots,
                     finalMessages,
                     toolSpecs,
@@ -337,13 +339,13 @@ export async function agentPipeline(
             } else {
                 // Write tools → pedir confirmación
                 await transitionState(userId, clientPhone, "confirming", {
-                    pendingIntent: intent,
+                    pendingIntent: actualIntent,
                     collectedSlots: allSlots,
                     missingSlots: [],
                 })
 
                 return await askForConfirmation(
-                    intent,
+                    actualIntent,
                     allSlots,
                     finalMessages,
                     startTime,
