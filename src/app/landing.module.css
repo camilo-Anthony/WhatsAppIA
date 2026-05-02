@@ -282,6 +282,14 @@
     margin-right: auto;
 }
 
+.ctaActions {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 .ctaButton {
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
     box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.5);
