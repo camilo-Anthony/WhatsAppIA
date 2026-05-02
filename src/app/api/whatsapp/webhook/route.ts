@@ -1,6 +1,9 @@
 /**
  * Webhook de WhatsApp Cloud API
  * Recibe mensajes entrantes y verificación del webhook.
+ *
+ * FIX: Usa dispatch() (con fallback a DB) en vez de incomingQueue.add()
+ *      para que los mensajes no se pierdan si Redis está caído.
  */
 
 import { NextResponse, NextRequest } from "next/server"
@@ -9,6 +12,20 @@ import { prisma } from "@/lib/db"
 export const dynamic = "force-dynamic"
 
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || ""
+
+// Asegurar que workers estén inicializados al recibir el primer webhook
+let _workersInitialized = false
+async function ensureWorkers() {
+    if (_workersInitialized) return
+    try {
+        const { whatsappManager } = await import("@/lib/whatsapp/manager")
+        await whatsappManager.initAllActiveConnections()
+        _workersInitialized = true
+        console.log("[Webhook] Workers inicializados desde webhook")
+    } catch (err) {
+        console.error("[Webhook] Error inicializando workers:", err)
+    }
+}
 
 /**
  * GET — Verificación del webhook por Meta.
@@ -31,10 +48,13 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST — Recibe eventos de WhatsApp Cloud API.
- * Procesa mensajes entrantes y los encola.
+ * Procesa mensajes entrantes y los encola via dispatcher (con fallback DB).
  */
 export async function POST(request: NextRequest) {
     try {
+        // Inicializar workers si es el primer webhook
+        await ensureWorkers()
+
         const body = await request.json()
 
         // Meta siempre envía un objeto con entry[]
@@ -88,9 +108,9 @@ export async function POST(request: NextRequest) {
 
                     console.log(`[Webhook] Mensaje de +${senderPhone}: "${messageContent}"`)
 
-                    // Encolar mensaje (importación dinámica para evitar init durante build)
-                    const { incomingQueue } = await import("@/lib/queue/incoming")
-                    await incomingQueue.add("incoming-message", {
+                    // DISPATCH con fallback a DB (en vez de incomingQueue.add directo)
+                    const { dispatch } = await import("@/lib/queue/dispatcher")
+                    await dispatch("incoming", {
                         connectionId: connection.id,
                         userId: connection.userId,
                         senderPhone,
@@ -98,6 +118,7 @@ export async function POST(request: NextRequest) {
                         messageContent,
                         messageId,
                         source: "cloud_api" as const,
+                        remoteJid: `${senderPhone}@s.whatsapp.net`,
                     })
                 }
             }

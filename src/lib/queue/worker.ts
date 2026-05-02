@@ -1,6 +1,9 @@
 /**
  * Queue Worker Orchestrator
  * Inicializa todos los workers de cola + retry cron al arrancar.
+ *
+ * FIX: El retry cron SIEMPRE arranca, incluso si Redis/BullMQ falla.
+ *      Es el fallback de emergencia que procesa jobs desde la DB.
  */
 
 import { startIncomingWorker } from "./incoming"
@@ -24,20 +27,29 @@ export function initializeQueueWorkers() {
 
     console.log("[Colas] Inicializando workers...")
 
+    // 1. Intentar iniciar workers de Redis (puede fallar si Redis no está)
     try {
         startIncomingWorker()
         startAIProcessingWorker()
         startOutgoingWorker()
-        startRetryCron(30_000) // Retry cada 30 segundos
-
-        globalForQueues.queuesInitialized = true
-        console.log("[Colas] Todos los workers + retry cron iniciados correctamente")
+        console.log("[Colas] Workers de Redis iniciados correctamente")
     } catch (error) {
-        console.error("[Colas] Error inicializando workers:", error)
-        globalForQueues.queuesInitialized = false
+        console.error("[Colas] Error inicializando workers de Redis (usando modo emergencia DB):", error)
     }
+
+    // 2. SIEMPRE iniciar el retry cron (fallback de emergencia)
+    try {
+        startRetryCron(15_000) // 15s para modo emergencia
+        console.log("[Colas] Retry cron iniciado (fallback emergencia activo)")
+    } catch (error) {
+        console.error("[Colas] Error CRÍTICO inicializando retry cron:", error)
+    }
+
+    globalForQueues.queuesInitialized = true
+    console.log("[Colas] Inicialización de workers completada")
 }
 
 if (process.env.NODE_ENV !== "production") {
     globalForQueues.queuesInitialized = globalForQueues.queuesInitialized || false
 }
+
