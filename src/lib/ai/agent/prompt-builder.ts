@@ -17,6 +17,7 @@
  */
 
 import type { PromptContext, PromptSection, ToolSpec } from "./types"
+import { TOOL_BEHAVIORS } from "./behaviors"
 
 // ==========================================
 // SOUL TEMPLATE — Reglas determinísticas (fijas para todos)
@@ -39,33 +40,12 @@ const SOUL_TEMPLATE = `## Reglas Base del Agente
 
 ### Tus Capacidades
 - Solo puedes realizar acciones para las que tengas habilidades disponibles (listadas en "Herramientas Disponibles").
-- Si NO tienes herramientas listadas, NO puedes agendar citas, consultar calendarios, hacer pagos, ni ejecutar ninguna acción. Solo puedes conversar dentro de tu ámbito.
 - Menciona tus capacidades de forma natural cuando sea relevante (ej: "Puedo revisar tu calendario...").
 - NUNCA digas "no tengo la herramienta para X". En su lugar, di "No tengo la capacidad de hacer X" o "Mi rol no incluye hacer X".
 - NUNCA digas "puedo hacer X" si NO tienes la herramienta correspondiente.
 
-### Flujo obligatorio para cada mensaje
-1. Interpretar la intención del mensaje del usuario
-2. ¿Está dentro de mi ámbito (Identidad + Información + Herramientas)? Si NO → redirigir amablemente
-3. Si hay una acción concreta → determinar si tengo los datos necesarios
-4. Si faltan datos → pedir SOLO lo necesario (UNA pregunta a la vez)
-5. Si la información está completa para una acción crítica → mostrar resumen y pedir confirmación
-6. Una vez confirmado → ejecutar la acción via tools
-7. Generar respuesta basada en el resultado
-
-### Reglas inquebrantables de ejecución
-- No generar respuestas abiertas si existe una acción concreta que ejecutar mediante herramientas
-- No ejecutar acciones si faltan datos obligatorios
-- No inventar acciones fuera de las herramientas disponibles
-- Siempre pedir confirmación antes de crear, modificar o eliminar datos sensibles
-- Una sola pregunta por mensaje al recolectar datos
-
 ### Cancelación
-- Si el usuario dice "no", "cancelar", "olvídalo" → cancelar la operación pendiente y volver al flujo normal
-
-### Mensajes No-Texto
-- Si recibes un mensaje vacío, un sticker, una imagen, un audio o un formato que no puedes procesar, responde algo breve y natural como: "Por ahora solo puedo leer mensajes de texto. ¿En qué te puedo ayudar?"
-- NUNCA ignores un mensaje ni respondas como si hubieras entendido contenido multimedia que no puedes ver.
+- Si el usuario dice "no", "cancelar", "olvídalo" → aborta cualquier recolección de datos y pregúntale en qué más le puedes ayudar.
 
 ### Comunicación
 - Adapta tu tono exactamente a como se indica en tu "Identidad".
@@ -124,6 +104,26 @@ ${toolList}
 
 Usa las herramientas cuando la solicitud del usuario requiera una acción concreta.
 Para preguntas, explicaciones o seguimiento, responde directamente desde el contexto de la conversación.`
+    },
+}
+
+/** Sección 1.5: Comportamientos Específicos (Inyectados Dinámicamente) */
+const behaviorsSection: PromptSection = {
+    name: "behaviors",
+    build: (ctx) => {
+        if (ctx.tools.length === 0) return ""
+        
+        const behaviors: string[] = []
+        for (const tool of ctx.tools) {
+            const behavior = TOOL_BEHAVIORS[tool.name]
+            if (behavior) {
+                behaviors.push(behavior.trim())
+            }
+        }
+        
+        if (behaviors.length === 0) return ""
+        
+        return `## Instrucciones de Comportamiento Específico\n\n${behaviors.join("\n\n")}`
     },
 }
 
@@ -201,6 +201,7 @@ const DEFAULT_SECTIONS: PromptSection[] = [
     antiNarrationSection,
     toolHonestySection,
     toolsSection,
+    behaviorsSection,
     safetySection,
     identitySection,
     soulSection,
