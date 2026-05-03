@@ -43,10 +43,6 @@ export default function LandingPage() {
               Ver características
             </Link>
           </div>
-          <br />
-          <Link href="/login" className={styles.heroLoginLink}>
-            Ya tengo cuenta
-          </Link>
         </div>
       </section>
 
