@@ -37,10 +37,10 @@ export default function LandingPage() {
           </p>
           <div className={styles.heroCTA}>
             <Link href="/register" className="btn btn-primary btn-lg">
-              Comenzar gratis
+              Empezar
             </Link>
-            <Link href="#features" className="btn btn-secondary btn-lg">
-              Ver características
+            <Link href="/login" className="btn btn-secondary btn-lg">
+              Ya tengo cuenta
             </Link>
           </div>
         </div>
