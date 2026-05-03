@@ -139,19 +139,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className={styles.cta}>
-        <div className="container">
-          <div className={`${styles.ctaCard} card`}>
-            <h2>Empieza a automatizar hoy</h2>
-            <p>Configura tu asistente en minutos. Sin tarjeta de crédito, sin compromisos.</p>
-            <Link href="/register" className="btn btn-primary btn-lg">
-              Crear cuenta gratis
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Transparencia y Privacidad */}
       <section className={styles.howItWorks} id="privacy-section">
         <div className="container">
