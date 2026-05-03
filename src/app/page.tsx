@@ -95,7 +95,7 @@ export default function LandingPage() {
                 </svg>
               </div>
               <h3>Configuración total</h3>
-              <p>Modo simple o avanzado para definir la información de tu negocio</p>
+              <p>Entrena a tu asistente con la información y reglas específicas de tu negocio</p>
             </div>
 
             <div className={`card ${styles.featureCard}`}>
@@ -105,7 +105,7 @@ export default function LandingPage() {
                 </svg>
               </div>
               <h3>Historial completo</h3>
-              <p>Revisa todas las conversaciones y mensajes en tu panel</p>
+              <p>Revisa y audita todas las conversaciones directamente desde tu panel</p>
             </div>
           </div>
         </div>
@@ -121,19 +121,19 @@ export default function LandingPage() {
             <div className={styles.step}>
               <div className={styles.stepNumber}>1</div>
               <h3>Conecta tu WhatsApp</h3>
-              <p>Vincula tu número escaneando un código QR desde tu teléfono</p>
+              <p>Vincula tu número escaneando un código QR de forma segura</p>
             </div>
             <div className={styles.stepDivider} />
             <div className={styles.step}>
               <div className={styles.stepNumber}>2</div>
               <h3>Configura tu asistente</h3>
-              <p>Define el tono, la personalidad y carga la información de tu negocio</p>
+              <p>Define su personalidad y enséñale todo sobre tus servicios</p>
             </div>
             <div className={styles.stepDivider} />
             <div className={styles.step}>
               <div className={styles.stepNumber}>3</div>
-              <h3>¡Listo!</h3>
-              <p>Tu asistente responde automáticamente a tus clientes 24/7</p>
+              <h3>¡A automatizar!</h3>
+              <p>Tu asistente comienza a atender a tus clientes 24/7 sin interrupciones</p>
             </div>
           </div>
         </div>
