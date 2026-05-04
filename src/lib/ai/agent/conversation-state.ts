@@ -34,7 +34,7 @@ export async function getConversationState(
     }
 
     try {
-        const meta = conversation.metadata as any
+        const meta = conversation.metadata as Record<string, unknown>
         if (!meta.conversationState) {
             return createFreshState(userId, contactPhone)
         }
@@ -66,6 +66,7 @@ export async function setConversationState(ctx: ConversationContext): Promise<vo
 
     if (!conversation) return
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existingMeta = (conversation.metadata as any) || {}
 
     await prisma.conversation.update({
@@ -73,7 +74,7 @@ export async function setConversationState(ctx: ConversationContext): Promise<vo
         data: {
             metadata: {
                 ...existingMeta,
-                conversationState: ctx,
+                conversationState: JSON.parse(JSON.stringify(ctx)),
             },
         },
     })
@@ -93,12 +94,13 @@ export async function clearConversationState(
 
     if (!conversation) return
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existingMeta = (conversation.metadata as any) || {}
     delete existingMeta.conversationState
 
     await prisma.conversation.update({
         where: { id: conversation.id },
-        data: { metadata: existingMeta },
+        data: { metadata: existingMeta as object },
     })
 }
 

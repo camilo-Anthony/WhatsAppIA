@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Política de Privacidad - WhatsAppAgent",
@@ -100,7 +101,7 @@ export default function PrivacyPolicyPage() {
       </section>
 
       <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid #333", textAlign: "center" }}>
-        <a href="/" style={{ color: "#60a5fa", textDecoration: "none" }}>← Volver al inicio</a>
+        <Link href="/" style={{ color: "#60a5fa", textDecoration: "none" }}>← Volver al inicio</Link>
       </div>
     </main>
   );

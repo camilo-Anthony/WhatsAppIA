@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Save } from "lucide-react"
+import { useRouter } from "next/navigation"
 import styles from "../../assistant.module.css"
 
 interface InfoField {
@@ -36,7 +36,7 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
     const [saved, setSaved] = useState(false)
     const [loading, setLoading] = useState(true)
 
-    const router = require("next/navigation").useRouter()
+    const _router = useRouter()
 
     const loadConfig = useCallback(async () => {
         if (resolvedParams.id === "new") {
@@ -147,7 +147,10 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
                 await fetch("/api/assistant/info-fields", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ fields: infoFields }),
+                    body: JSON.stringify({
+                        fields: infoFields,
+                        assistantConfigId: resolvedParams.id,
+                    }),
                 })
             }
 
@@ -161,8 +164,9 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
     }, [config, infoFields, resolvedParams.id])
 
     useEffect(() => {
-        window.addEventListener('save-assistant', handleSave as any)
-        return () => window.removeEventListener('save-assistant', handleSave as any)
+        const handler = handleSave as EventListener
+        window.addEventListener('save-assistant', handler)
+        return () => window.removeEventListener('save-assistant', handler)
     }, [handleSave])
 
     const addField = () => {

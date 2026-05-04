@@ -8,6 +8,7 @@
 
 import { NextResponse, NextRequest } from "next/server"
 import { prisma } from "@/lib/db"
+import { redactPhone } from "@/lib/utils/redact"
 
 export const dynamic = "force-dynamic"
 
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
                 })
 
                 if (!connection) {
-                    console.warn(`[Webhook] No se encontró conexión para phoneNumberId: ${phoneNumberId} (${displayPhone})`)
+                    console.warn(`[Webhook] No se encontró conexión para phoneNumberId: ${phoneNumberId}`)
                     continue
                 }
 
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
                     )
                     const senderName = contact?.profile?.name
 
-                    console.log(`[Webhook] Mensaje de +${senderPhone}: "${messageContent}"`)
+                    console.log(`[Webhook] Mensaje de ${redactPhone(senderPhone)}: [${messageContent.length} chars]`)
 
                     // DISPATCH con fallback a DB (en vez de incomingQueue.add directo)
                     const { dispatch } = await import("@/lib/queue/dispatcher")

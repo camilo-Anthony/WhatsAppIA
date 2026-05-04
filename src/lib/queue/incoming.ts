@@ -5,6 +5,7 @@
 
 import { prisma } from "../db"
 import { dispatch } from "@/lib/queue/dispatcher"
+import { redactPhone } from "@/lib/utils/redact"
 
 // ==========================================
 // TIPOS
@@ -41,7 +42,7 @@ export async function handleIncomingMessage(data: IncomingMessageJob) {
         }
     }
 
-    console.log(`[Incoming] Procesando mensaje de +${senderPhone}`)
+    console.log(`[Incoming] Procesando mensaje de ${redactPhone(senderPhone)}`)
 
     let conversation = await prisma.conversation.findFirst({
         where: { userId, clientPhone: senderPhone },

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import {
     Calendar,
     FileText,
@@ -84,12 +85,12 @@ interface Integration {
 import { use } from "react"
 
 export default function ToolsPage({ params }: { params: Promise<{ id: string }> }) {
-    const resolvedParams = use(params)
+    const _params = use(params)
     const [integrations, setIntegrations] = useState<Integration[]>([])
     const [loading, setLoading] = useState(true)
     const [updatingTool, setUpdatingTool] = useState<string | null>(null)
 
-    const router = require("next/navigation").useRouter()
+    const _router = useRouter()
 
     const loadIntegrations = useCallback(async () => {
         try {

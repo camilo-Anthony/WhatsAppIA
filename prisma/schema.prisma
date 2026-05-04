@@ -154,21 +154,25 @@ model AssistantConfig {
 
   user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   connections WhatsAppConnection[]
+  infoFields  InfoField[]
 
   @@index([userId])
   @@map("assistant_configs")
 }
 
 model InfoField {
-  id      String @id @default(cuid())
-  userId  String
-  label   String
-  content String @db.Text
-  order   Int    @default(0)
+  id                String  @id @default(cuid())
+  userId            String
+  assistantConfigId String?
+  label             String
+  content           String  @db.Text
+  order             Int     @default(0)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assistantConfig AssistantConfig? @relation(fields: [assistantConfigId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([assistantConfigId])
   @@map("info_fields")
 }
 

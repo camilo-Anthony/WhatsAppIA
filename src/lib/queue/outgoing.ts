@@ -5,6 +5,7 @@
 
 import { prisma } from "@/lib/db"
 import { sendTextMessage } from "@/lib/whatsapp/cloud-api"
+import { redactPhone } from "@/lib/utils/redact"
 
 // ==========================================
 // TIPOS
@@ -50,7 +51,7 @@ async function waitForRateLimit(connectionId: string) {
 export async function handleOutgoingMessage(data: OutgoingMessageJob) {
     const { connectionId, recipientJid, recipientPhone, text } = data
 
-    console.log(`[Outgoing] Enviando mensaje a ${recipientPhone}`)
+    console.log(`[Outgoing] Enviando mensaje a ${redactPhone(recipientPhone)}`)
 
     await waitForRateLimit(connectionId)
 
@@ -101,6 +102,6 @@ export async function handleOutgoingMessage(data: OutgoingMessageJob) {
         data: { lastActive: new Date() },
     })
 
-    console.log(`[Outgoing] Mensaje enviado a ${recipientPhone}`)
+    console.log(`[Outgoing] Mensaje enviado a ${redactPhone(recipientPhone)}`)
     return true
 }

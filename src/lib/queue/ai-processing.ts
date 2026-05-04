@@ -5,6 +5,7 @@
 
 import { prisma } from "../db"
 import { dispatch } from "@/lib/queue/dispatcher"
+import { redactPhone } from "@/lib/utils/redact"
 
 // ==========================================
 // TIPOS
@@ -26,7 +27,7 @@ export interface AIProcessingJob {
 export async function handleAIProcessing(data: AIProcessingJob) {
     const { userId, connectionId, conversationId, clientPhone, messageContent, remoteJid } = data
 
-    console.log(`[AI] Procesando request de IA para +${clientPhone}`)
+    console.log(`[AI] Procesando request de IA para ${redactPhone(clientPhone)}`)
 
     try {
         const { agentPipeline } = await import("@/lib/ai/agent/agent-pipeline")

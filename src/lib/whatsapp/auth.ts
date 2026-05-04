@@ -16,6 +16,7 @@ export const usePostgresAuthState = async (
     connectionId: string
 ): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> => {
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const readData = async (category: string, key: string): Promise<any> => {
         try {
             const session = await prisma.whatsAppSession.findUnique({
@@ -37,6 +38,7 @@ export const usePostgresAuthState = async (
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const writeData = async (category: string, key: string, data: any) => {
         try {
             const dataStr = JSON.stringify(data, BufferJSON.replacer)
@@ -76,7 +78,7 @@ export const usePostgresAuthState = async (
             })
         } catch (error) {
             // Ignoramos errores de "no encontrado"
-            if ((error as any).code !== "P2025") {
+            if ((error as { code?: string }).code !== "P2025") {
                 console.error(`[WA Auth] Error removing ${category}:${key}`, error)
             }
         }
@@ -141,6 +143,7 @@ export const usePostgresAuthState = async (
 }
 
 // Helpers para sync keys
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function importSyncKey(key: any) {
     if (key?.parsedData?.byteLength) {
         return key.parsedData

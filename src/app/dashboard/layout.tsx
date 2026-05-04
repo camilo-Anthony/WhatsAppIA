@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { signOut, useSession } from "next-auth/react"
 import Link from "next/link"
 import { SessionProvider } from "next-auth/react"
@@ -78,11 +78,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const prevPathname = useRef(pathname)
 
     // Close sidebar on route change
+    /* eslint-disable react-hooks/set-state-in-effect */
     useEffect(() => {
-        setSidebarOpen(false)
+        if (prevPathname.current !== pathname) {
+            prevPathname.current = pathname
+            setSidebarOpen(false)
+        }
     }, [pathname])
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     return (
         <div className={styles.layout}>

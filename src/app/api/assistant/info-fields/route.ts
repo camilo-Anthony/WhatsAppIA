@@ -11,17 +11,26 @@ const fieldSchema = z.object({
 
 const updateFieldsSchema = z.object({
     fields: z.array(fieldSchema),
+    assistantConfigId: z.string().optional(),
 })
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const session = await auth()
         if (!session?.user?.id) {
             return NextResponse.json({ error: "No autorizado" }, { status: 401 })
         }
 
+        const { searchParams } = new URL(request.url)
+        const assistantConfigId = searchParams.get("assistantConfigId")
+
+        // BUG-004: Scope fields by assistantConfigId when provided
+        const where = assistantConfigId
+            ? { userId: session.user.id, assistantConfigId }
+            : { userId: session.user.id, assistantConfigId: null }
+
         const fields = await prisma.infoField.findMany({
-            where: { userId: session.user.id },
+            where,
             orderBy: { order: "asc" },
         })
 
@@ -49,13 +58,16 @@ export async function POST(request: Request) {
             )
         }
 
+        const assistantConfigId = body.assistantConfigId || null
+
         const count = await prisma.infoField.count({
-            where: { userId: session.user.id },
+            where: { userId: session.user.id, assistantConfigId },
         })
 
         const field = await prisma.infoField.create({
             data: {
                 userId: session.user.id,
+                assistantConfigId,
                 label: validation.data.label,
                 content: validation.data.content,
                 order: validation.data.order ?? count,
@@ -86,14 +98,17 @@ export async function PUT(request: Request) {
             )
         }
 
-        // Delete existing and replace with new
+        const assistantConfigId = validation.data.assistantConfigId || null
+
+        // BUG-004: Delete and replace scoped by assistantConfigId
         await prisma.infoField.deleteMany({
-            where: { userId: session.user.id },
+            where: { userId: session.user.id, assistantConfigId },
         })
 
         const fields = await prisma.infoField.createMany({
             data: validation.data.fields.map((field, index) => ({
                 userId: session.user.id,
+                assistantConfigId,
                 label: field.label,
                 content: field.content,
                 order: field.order ?? index,

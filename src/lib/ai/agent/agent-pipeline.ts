@@ -59,7 +59,7 @@ export async function agentPipeline(
     const startTime = Date.now()
     const steps: AgentStep[] = []
     const toolsUsed: string[] = []
-    let totalTokens = { prompt: 0, completion: 0, total: 0 }
+    const totalTokens = { prompt: 0, completion: 0, total: 0 }
     let stepCounter = 0
 
     // ── 0. VALIDACIÓN DE ENTRADA ─────────────────────────────

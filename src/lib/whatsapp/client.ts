@@ -18,6 +18,7 @@ import { prisma } from "../db"
 import { handleBaileysMessage } from "./listener"
 import { dispatch } from "@/lib/queue/dispatcher"
 import { usePostgresAuthState } from "./auth"
+import { redactPhone } from "@/lib/utils/redact"
 
 export class WhatsAppClient {
     public connectionId: string
@@ -40,6 +41,7 @@ export class WhatsAppClient {
     }
 
     public async initialize() {
+        // eslint-disable-next-line react-hooks/rules-of-hooks -- Not a React hook, it's a Baileys auth adapter
         const { state, saveCreds } = await usePostgresAuthState(this.connectionId)
         const { version } = await fetchLatestBaileysVersion()
 
@@ -149,7 +151,7 @@ export class WhatsAppClient {
 
     public async sendMessage(jid: string, text: string) {
         if (!this.socket) throw new Error("Socket not initialized")
-        console.log(`[WA] Intentando enviar a JID exacto: "${jid}"`)
+        console.log(`[WA] Intentando enviar a JID: "${redactPhone(jid)}"`)
         try {
             // Añadimos simulación de "escribiendo..." para calentar el socket
             await this.socket.sendPresenceUpdate("composing", jid)

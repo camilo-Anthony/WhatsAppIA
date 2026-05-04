@@ -16,7 +16,8 @@ const BATCH_SIZE = 50
  * Procesa un job directamente llamando a la lógica de negocio,
  * puenteando BullMQ completamente.
  */
-async function processJobDirectly(job: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function processJobDirectly(job: { queue: string; payload: any }) {
     const queue = job.queue
     const payload = job.payload
 

@@ -12,7 +12,6 @@ import {
     Smartphone, 
     Check, 
     AlertTriangle, 
-    Info, 
     Trash2,
     CheckCircle2
 } from "lucide-react"
@@ -313,6 +312,7 @@ function ConnectionTypeSelector({
             cons: ["Requiere verificar negocio", "Meta cobra por conversación"],
             tag: "Oficial",
             recommended: true,
+            inDevelopment: true,
         },
         {
             type: "MANAGED" as ConnectionType,
@@ -324,6 +324,7 @@ function ConnectionTypeSelector({
             cons: ["Solo disponible vía API (sin app)"],
             tag: "Oficial",
             recommended: true,
+            inDevelopment: true,
         },
     ]
 
@@ -343,15 +344,17 @@ function ConnectionTypeSelector({
                     {options.map((opt) => (
                         <div
                             key={opt.type}
-                            className={`${styles.typeCardCol} ${opt.recommended ? styles.typeCardColRecommended : ""}`}
+                            className={`${styles.typeCardCol} ${opt.recommended && !opt.inDevelopment ? styles.typeCardColRecommended : ""} ${(opt as any).inDevelopment ? styles.typeCardColDisabled : ""}`}
                             role="button"
-                            tabIndex={0}
-                            onClick={() => onSelect(opt.type)}
-                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(opt.type) }}
+                            tabIndex={(opt as any).inDevelopment ? -1 : 0}
+                            onClick={() => !(opt as any).inDevelopment && onSelect(opt.type)}
+                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { if (!(opt as any).inDevelopment) onSelect(opt.type) } }}
                         >
-                            {opt.recommended && (
+                            {(opt as any).inDevelopment ? (
+                                <span className={styles.developmentBadgeCol}>En desarrollo</span>
+                            ) : opt.recommended ? (
                                 <span className={styles.recommendedBadgeCol}>Recomendado</span>
-                            )}
+                            ) : null}
                             
                             <div className={styles.typeCardColIcon}>
                                 {opt.icon}
@@ -616,6 +619,7 @@ function ConnectionsContent() {
     const [showSelector, setShowSelector] = useState(false)
     const [showPhoneRegistration, setShowPhoneRegistration] = useState(false)
     const [metaLoading, setMetaLoading] = useState(false)
+    const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const searchParams = useSearchParams()
 
     const loadConnections = useCallback(async () => {
@@ -679,9 +683,11 @@ function ConnectionsContent() {
                 })
                 if (res.ok) {
                     await loadConnections()
+                } else {
+                    setErrorMsg("Error al crear la conexión QR")
                 }
-            } catch (error) {
-                console.error("Error creating connection:", error)
+            } catch {
+                setErrorMsg("Error de conexión al crear QR")
             } finally {
                 setCreating(false)
             }
@@ -694,9 +700,11 @@ function ConnectionsContent() {
 
                 if (data.loginUrl) {
                     window.location.href = data.loginUrl
+                } else {
+                    setErrorMsg("No se pudo iniciar la autenticación con Meta")
                 }
-            } catch (error) {
-                console.error("Error initiating Meta OAuth:", error)
+            } catch {
+                setErrorMsg("Error de conexión al iniciar OAuth")
             } finally {
                 setMetaLoading(false)
             }
@@ -714,15 +722,41 @@ function ConnectionsContent() {
         }
 
         try {
-            await fetch(`/api/whatsapp/connections?id=${id}`, { method: "DELETE" })
-            await loadConnections()
-        } catch (error) {
-            console.error("Error deleting connection:", error)
+            const res = await fetch(`/api/whatsapp/connections?id=${id}`, { method: "DELETE" })
+            if (res.ok) {
+                await loadConnections()
+            } else {
+                setErrorMsg("Error al eliminar la conexión")
+            }
+        } catch {
+            setErrorMsg("Error de conexión al eliminar")
         }
     }
 
     return (
         <div className={styles.container}>
+            {/* BUG-011: Error feedback banner */}
+            {errorMsg && (
+                <div style={{
+                    padding: "12px 16px",
+                    marginBottom: "16px",
+                    background: "rgba(var(--color-error-rgb), 0.1)",
+                    border: "1px solid var(--color-error)",
+                    borderRadius: "var(--radius-md)",
+                    color: "var(--color-error)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}>
+                    <span>{errorMsg}</span>
+                    <button
+                        onClick={() => setErrorMsg(null)}
+                        style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: "18px" }}
+                    >
+                        &times;
+                    </button>
+                </div>
+            )}
             <div className={styles.header}>
                 <div>
                     <h1 className={styles.title}>Conexiones WhatsApp</h1>
