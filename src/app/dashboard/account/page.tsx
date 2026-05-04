@@ -31,11 +31,57 @@ function AccountContent() {
         setMessage("")
 
         try {
-            // Just show success for now - full profile update API can be added
+            // Update profile (name & company)
+            const profileRes = await fetch("/api/user/profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: formData.name,
+                    company: formData.company,
+                }),
+            })
+
+            if (!profileRes.ok) {
+                const data = await profileRes.json()
+                setMessage(data.error || "Error al guardar perfil")
+                return
+            }
+
+            // Update password only if the user filled in the fields
+            if (formData.currentPassword && formData.newPassword) {
+                if (formData.newPassword !== formData.confirmPassword) {
+                    setMessage("Las contraseñas no coinciden")
+                    return
+                }
+
+                const pwRes = await fetch("/api/user/password", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        currentPassword: formData.currentPassword,
+                        newPassword: formData.newPassword,
+                    }),
+                })
+
+                if (!pwRes.ok) {
+                    const data = await pwRes.json()
+                    setMessage(data.error || "Error al cambiar contraseña")
+                    return
+                }
+
+                // Clear password fields on success
+                setFormData((prev) => ({
+                    ...prev,
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                }))
+            }
+
             setMessage("Configuración guardada")
             setTimeout(() => setMessage(""), 3000)
         } catch {
-            setMessage("Error al guardar")
+            setMessage("Error de conexión al guardar")
         } finally {
             setSaving(false)
         }

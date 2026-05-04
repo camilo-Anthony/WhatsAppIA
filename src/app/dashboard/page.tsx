@@ -5,6 +5,7 @@ import {
     Zap,
     ArrowRight
 } from "lucide-react"
+import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import styles from "./overview.module.css"
@@ -16,6 +17,7 @@ export default async function DashboardPage() {
     let activeConnectionsCount = 0
     let messagesTodayCount = 0
     let conversationsCount = 0
+    let primaryAssistantId: string | null = null
 
     if (userId) {
         // Fetch connections
@@ -38,6 +40,14 @@ export default async function DashboardPage() {
                 timestamp: { gte: startOfDay },
             },
         })
+
+        // BUG-003: Get the primary (oldest) assistant config for the "Información" link
+        const primaryAssistant = await prisma.assistantConfig.findFirst({
+            where: { userId },
+            orderBy: { createdAt: "asc" },
+            select: { id: true },
+        })
+        primaryAssistantId = primaryAssistant?.id || null
     }
 
     const stats = [
@@ -70,6 +80,11 @@ export default async function DashboardPage() {
             bgColor: activeConnectionsCount > 0 ? "rgba(var(--color-success-rgb), 0.1)" : "rgba(var(--color-error-rgb), 0.1)",
         },
     ]
+
+    // BUG-003: Build the correct knowledge link
+    const knowledgeHref = primaryAssistantId
+        ? `/dashboard/assistant/${primaryAssistantId}/knowledge`
+        : `/dashboard/assistant`
 
     return (
         <div className={styles.container}>
@@ -104,21 +119,21 @@ export default async function DashboardPage() {
             <div className={styles.quickActions}>
                 <h2 className={styles.sectionTitle}>Primeros pasos</h2>
                 <div className={styles.actionsGrid}>
-                    <a href="/dashboard/connections" className={`card card-interactive ${styles.actionCard}`}>
+                    <Link href="/dashboard/connections" className={`card card-interactive ${styles.actionCard}`}>
                         <div className={styles.actionNumber}>1</div>
                         <h3>Conectar WhatsApp</h3>
                         <p>Vincula tu número de WhatsApp escaneando un código QR</p>
-                    </a>
-                    <a href="/dashboard/assistant" className={`card card-interactive ${styles.actionCard}`}>
+                    </Link>
+                    <Link href="/dashboard/assistant" className={`card card-interactive ${styles.actionCard}`}>
                         <div className={styles.actionNumber}>2</div>
                         <h3>Comportamiento</h3>
                         <p>Define el prompt y la personalidad de tu asistente</p>
-                    </a>
-                    <a href="/dashboard/assistant/knowledge" className={`card card-interactive ${styles.actionCard}`}>
+                    </Link>
+                    <Link href={knowledgeHref} className={`card card-interactive ${styles.actionCard}`}>
                         <div className={styles.actionNumber}>3</div>
                         <h3>Información</h3>
                         <p>Agrega los datos del negocio que el bot usará para responder</p>
-                    </a>
+                    </Link>
                 </div>
             </div>
         </div>

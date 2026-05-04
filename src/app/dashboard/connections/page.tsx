@@ -706,6 +706,13 @@ function ConnectionsContent() {
     }
 
     const deleteConnection = async (id: string) => {
+        // BUG-007: Require confirmation before destructive action
+        const conn = connections.find((c) => c.id === id)
+        const label = conn?.phoneNumber || conn?.displayName || id
+        if (!confirm(`¿Estás seguro de eliminar la conexión ${label}? Esta acción no se puede deshacer.`)) {
+            return
+        }
+
         try {
             await fetch(`/api/whatsapp/connections?id=${id}`, { method: "DELETE" })
             await loadConnections()

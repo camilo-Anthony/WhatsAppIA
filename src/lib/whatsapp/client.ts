@@ -28,6 +28,11 @@ export class WhatsAppClient {
     private socket: ReturnType<typeof makeWASocket> | null = null
     private authFolder: string
 
+    // ── BUG-005: Reconnection control ──
+    private static readonly MAX_RECONNECT_ATTEMPTS = 5
+    private static readonly BASE_BACKOFF_MS = 2000
+    private reconnectAttempts = 0
+
     constructor(connectionId: string, userId: string) {
         this.connectionId = connectionId
         this.userId = userId
@@ -60,16 +65,39 @@ export class WhatsAppClient {
             }
 
             if (connection === "close") {
-                const shouldReconnect =
-                    (lastDisconnect?.error as Boom)?.output?.statusCode !==
-                    DisconnectReason.loggedOut
+                const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode
+                const shouldReconnect = statusCode !== DisconnectReason.loggedOut
 
+                // BUG-005: Detect conflict (another session replaced this one)
+                const isConflict = statusCode === DisconnectReason.connectionReplaced
+                
                 this.status = "DISCONNECTED"
                 this.qrCode = null
 
+                if (isConflict) {
+                    console.log(`[WA] Conexión ${this.connectionId} reemplazada por otra sesión. Deteniendo reintentos.`)
+                    await prisma.whatsAppConnection.update({
+                        where: { id: this.connectionId },
+                        data: { status: "REQUIRES_RECONNECTION" },
+                    })
+                    return
+                }
+
                 if (shouldReconnect) {
-                    console.log("[WA] Reconectando...")
-                    setTimeout(() => this.initialize(), 3000)
+                    this.reconnectAttempts++
+
+                    if (this.reconnectAttempts > WhatsAppClient.MAX_RECONNECT_ATTEMPTS) {
+                        console.error(`[WA] Conexión ${this.connectionId}: Máximo de reintentos (${WhatsAppClient.MAX_RECONNECT_ATTEMPTS}) alcanzado. Marcando como ERROR.`)
+                        await prisma.whatsAppConnection.update({
+                            where: { id: this.connectionId },
+                            data: { status: "ERROR" },
+                        })
+                        return
+                    }
+
+                    const backoffMs = WhatsAppClient.BASE_BACKOFF_MS * Math.pow(2, this.reconnectAttempts - 1)
+                    console.log(`[WA] Reconectando ${this.connectionId} (intento ${this.reconnectAttempts}/${WhatsAppClient.MAX_RECONNECT_ATTEMPTS}) en ${backoffMs}ms...`)
+                    setTimeout(() => this.initialize(), backoffMs)
                 } else {
                     console.log("[WA] Sesión cerrada. Limpiando...")
                     this.cleanupAuthFolder()
@@ -82,6 +110,7 @@ export class WhatsAppClient {
                 console.log(`[WA] Conexión ${this.connectionId} abierta exitosamente`)
                 this.status = "CONNECTED"
                 this.qrCode = null
+                this.reconnectAttempts = 0 // Reset on successful connection
 
                 const user = this.socket?.user
                 const phone = user?.id ? user.id.split(":")[0] : null

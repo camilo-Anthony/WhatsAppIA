@@ -26,7 +26,20 @@ export interface IncomingMessageJob {
 // ==========================================
 
 export async function handleIncomingMessage(data: IncomingMessageJob) {
-    const { connectionId, userId, senderPhone, senderName, messageContent, remoteJid } = data
+    const { connectionId, userId, senderPhone, senderName, messageContent, messageId, remoteJid } = data
+
+    // ── Deduplicación (BUG-001) ──
+    // Si ya existe un mensaje con este externalId en esta conexión, ignorar.
+    if (messageId) {
+        const existing = await prisma.message.findFirst({
+            where: { externalId: messageId, connectionId },
+            select: { id: true },
+        })
+        if (existing) {
+            console.log(`[Incoming] Duplicado ignorado: ${messageId}`)
+            return null
+        }
+    }
 
     console.log(`[Incoming] Procesando mensaje de +${senderPhone}`)
 
@@ -51,6 +64,7 @@ export async function handleIncomingMessage(data: IncomingMessageJob) {
             connectionId,
             direction: "INCOMING",
             content: messageContent,
+            externalId: messageId || null,
         },
     })
 

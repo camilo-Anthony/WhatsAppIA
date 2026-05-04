@@ -70,13 +70,21 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: "ID requerido" }, { status: 400 })
         }
 
+        // BUG-008: Validate ownership BEFORE any side effects
+        const connection = await prisma.whatsAppConnection.findFirst({
+            where: { id: connectionId, userId: session.user.id },
+            select: { id: true },
+        })
+
+        if (!connection) {
+            return NextResponse.json({ error: "Conexión no encontrada" }, { status: 404 })
+        }
+
+        // Now it's safe to remove the in-memory client
         await whatsappManager.removeClient(connectionId)
 
-        await prisma.whatsAppConnection.deleteMany({
-            where: {
-                id: connectionId,
-                userId: session.user.id, // Tenant isolation
-            },
+        await prisma.whatsAppConnection.delete({
+            where: { id: connectionId },
         })
 
         return NextResponse.json({ message: "Conexión eliminada" })
