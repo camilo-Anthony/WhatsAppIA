@@ -26,8 +26,8 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
     const [loading, setLoading] = useState(true)
 
     // Generator states
-    const [generatorRole, setGeneratorRole] = useState("Asistente de Ventas")
-    const [generatorTone, setGeneratorTone] = useState("Amigable, cercano y empático")
+    const [generatorRole, setGeneratorRole] = useState("")
+    const [generatorTone, setGeneratorTone] = useState("")
     const [generatorRules, setGeneratorRules] = useState("")
 
     const applyGeneratedPrompt = () => {
@@ -167,34 +167,28 @@ ${generatorRules.trim() ? generatorRules.split('\n').map(r => r.trim().startsWit
                     <label style={{ display: "block", fontSize: "var(--font-size-sm)", fontWeight: 600, marginBottom: "var(--space-2)" }}>
                         1. ¿Cuál es su rol principal?
                     </label>
-                    <select 
+                    <input 
+                        type="text"
                         className="input" 
                         value={generatorRole} 
                         onChange={(e) => setGeneratorRole(e.target.value)}
+                        placeholder="Ej: Asistente de ventas para una ferretería"
                         style={{ width: "100%", background: "var(--color-bg-primary)" }}
-                    >
-                        <option value="Asistente de Ventas">Asistente de Ventas (Persuasivo, enfocado en conversiones)</option>
-                        <option value="Soporte Técnico">Soporte Técnico (Paciente, detallado, resuelve problemas)</option>
-                        <option value="Atención al Cliente">Atención al Cliente (Informativo, resuelve dudas generales)</option>
-                        <option value="Recepcionista / Agendador">Recepcionista / Agendador (Enfocado en tomar reservas/citas)</option>
-                    </select>
+                    />
                 </div>
                 
                 <div>
                     <label style={{ display: "block", fontSize: "var(--font-size-sm)", fontWeight: 600, marginBottom: "var(--space-2)" }}>
                         2. ¿Qué tono de comunicación debe usar?
                     </label>
-                    <select 
+                    <input 
+                        type="text"
                         className="input" 
                         value={generatorTone} 
                         onChange={(e) => setGeneratorTone(e.target.value)}
+                        placeholder="Ej: Amigable, persuasivo y formal"
                         style={{ width: "100%", background: "var(--color-bg-primary)" }}
-                    >
-                        <option value="Amigable, cercano y empático">Amigable, cercano y empático (Recomendado)</option>
-                        <option value="Profesional, formal y respetuoso">Profesional, formal y respetuoso</option>
-                        <option value="Entusiasta y vendedor">Entusiasta y persuasivo</option>
-                        <option value="Directo, conciso y al grano">Directo y al grano (Sin adornos)</option>
-                    </select>
+                    />
                 </div>
 
                 <div>
