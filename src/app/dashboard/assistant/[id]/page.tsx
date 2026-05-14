@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Save } from "lucide-react"
 import { useRouter } from "next/navigation"
 import styles from "../assistant.module.css"
 
@@ -21,8 +20,6 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
     const resolvedParams = use(params)
     const router = useRouter()
     const [profile, setProfile] = useState<AssistantProfile | null>(null)
-    const [saving, setSaving] = useState(false)
-    const [saved, setSaved] = useState(false)
     const [loading, setLoading] = useState(true)
 
     // Generator states
@@ -94,8 +91,6 @@ ${generatorRules.trim() ? generatorRules.split('\n').map(r => r.trim().startsWit
 
     const handleSave = useCallback(async () => {
         if (!profile || resolvedParams.id === "new") return
-        setSaving(true)
-        setSaved(false)
 
         try {
             await fetch(`/api/assistant/config/${resolvedParams.id}`, {
@@ -108,13 +103,9 @@ ${generatorRules.trim() ? generatorRules.split('\n').map(r => r.trim().startsWit
                     simpleInfo: profile.simpleInfo,
                 }),
             })
-            setSaved(true)
             router.refresh()
-            setTimeout(() => setSaved(false), 3000)
         } catch (error) {
             console.error("Error saving:", error)
-        } finally {
-            setSaving(false)
         }
     }, [profile, resolvedParams.id, router])
 

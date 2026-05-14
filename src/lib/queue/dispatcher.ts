@@ -11,8 +11,12 @@
 
 import { prisma } from "../db"
 import { NormalizedMessage } from "../whatsapp/provider"
+import type { AIProcessingJob } from "./ai-processing"
+import type { IncomingMessageJob } from "./incoming"
+import type { OutgoingMessageJob } from "./outgoing"
 
 export type QueueName = "incoming" | "ai-processing" | "outgoing"
+type QueuePayload = IncomingMessageJob | AIProcessingJob | OutgoingMessageJob
 
 // ==========================================
 // DEDUPLICACIÓN (via DB, sin Redis)
@@ -33,17 +37,16 @@ async function isDuplicate(messageId: string): Promise<boolean> {
 /**
  * Ejecuta la lógica de negocio de una cola directamente.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function processDirectly(queue: QueueName, data: any): Promise<void> {
+async function processDirectly(queue: QueueName, data: QueuePayload): Promise<void> {
     if (queue === "incoming") {
         const { handleIncomingMessage } = await import("./incoming")
-        await handleIncomingMessage(data)
+        await handleIncomingMessage(data as IncomingMessageJob)
     } else if (queue === "ai-processing") {
         const { handleAIProcessing } = await import("./ai-processing")
-        await handleAIProcessing(data)
+        await handleAIProcessing(data as AIProcessingJob)
     } else if (queue === "outgoing") {
         const { handleOutgoingMessage } = await import("./outgoing")
-        await handleOutgoingMessage(data)
+        await handleOutgoingMessage(data as OutgoingMessageJob)
     }
 }
 
@@ -55,13 +58,14 @@ async function processDirectly(queue: QueueName, data: any): Promise<void> {
  * Procesa un trabajo inmediatamente.
  * Si falla, lo guarda en DB para reintento automático.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function dispatch(queueNameOrMessage: QueueName | NormalizedMessage, payload?: any) {
+export async function dispatch(queueNameOrMessage: QueueName | NormalizedMessage, payload?: QueuePayload) {
     let queue: QueueName
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let data: any
+    let data: QueuePayload
 
     if (typeof queueNameOrMessage === "string") {
+        if (!payload) {
+            throw new Error(`Payload requerido para cola ${queueNameOrMessage}`)
+        }
         queue = queueNameOrMessage
         data = payload
     } else {
@@ -95,8 +99,8 @@ export async function dispatch(queueNameOrMessage: QueueName | NormalizedMessage
         await prisma.queueJob.create({
             data: {
                 queue: queue,
-                connectionId: (data.connectionId as string) || "unknown",
-                payload: data,
+                connectionId: data.connectionId || "unknown",
+                payload: JSON.parse(JSON.stringify(data)),
                 status: "pending",
                 attempts: 1, // Ya intentamos 1 vez
                 maxAttempts: 5,

@@ -6,6 +6,12 @@ import {
 } from "@whiskeysockets/baileys"
 import { prisma } from "../db"
 
+type SyncKeyLike = {
+    parsedData?: {
+        byteLength?: number
+    }
+}
+
 /**
  * Adaptador de autenticación de Baileys respaldado por PostgreSQL.
  * Permite que las sesiones de WhatsApp sobrevivan reinicios en plataformas efímeras como Render.
@@ -16,8 +22,7 @@ export const usePostgresAuthState = async (
     connectionId: string
 ): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> => {
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const readData = async (category: string, key: string): Promise<any> => {
+    const readData = async <T = unknown>(category: string, key: string): Promise<T | null> => {
         try {
             const session = await prisma.whatsAppSession.findUnique({
                 where: {
@@ -29,7 +34,7 @@ export const usePostgresAuthState = async (
                 },
             })
             if (session) {
-                return JSON.parse(session.data, BufferJSON.reviver)
+                return JSON.parse(session.data, BufferJSON.reviver) as T
             }
             return null
         } catch (error) {
@@ -38,8 +43,7 @@ export const usePostgresAuthState = async (
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const writeData = async (category: string, key: string, data: any) => {
+    const writeData = async (category: string, key: string, data: unknown) => {
         try {
             const dataStr = JSON.stringify(data, BufferJSON.replacer)
             await prisma.whatsAppSession.upsert({
@@ -85,7 +89,7 @@ export const usePostgresAuthState = async (
     }
 
     // 1. Cargar credenciales principales
-    let creds = await readData("creds", "default")
+    let creds = await readData<AuthenticationState["creds"]>("creds", "default")
     if (!creds) {
         creds = initAuthCreds()
     }
@@ -98,7 +102,7 @@ export const usePostgresAuthState = async (
                     const data: { [key: string]: SignalDataTypeMap[typeof type] } = {}
                     await Promise.all(
                         ids.map(async (id) => {
-                            let value = await readData(type, id)
+                            let value = await readData<SignalDataTypeMap[typeof type]>(type, id)
                             if (type === "app-state-sync-key" && value) {
                                 value = importSyncKey(value)
                             }
@@ -143,10 +147,10 @@ export const usePostgresAuthState = async (
 }
 
 // Helpers para sync keys
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function importSyncKey(key: any) {
-    if (key?.parsedData?.byteLength) {
-        return key.parsedData
+function importSyncKey<T>(key: T): T {
+    const maybeSyncKey = key as SyncKeyLike
+    if (maybeSyncKey?.parsedData?.byteLength) {
+        return maybeSyncKey.parsedData as T
     }
     return key
 }

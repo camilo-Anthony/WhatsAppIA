@@ -76,8 +76,7 @@ NO incluyas texto adicional, SOLO el JSON.`
 export async function classifyIntent(
     message: string,
     conversationState: ConversationContext,
-    tools: ToolSpec[],
-    userId: string
+    tools: ToolSpec[]
 ): Promise<ClassificationResult> {
     const systemPrompt = buildClassificationPrompt(tools, conversationState)
 

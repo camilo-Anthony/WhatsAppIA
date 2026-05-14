@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronLeft, Plus, Save } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import styles from "../assistant.module.css"
 
@@ -19,44 +19,7 @@ export default function SingleAssistantLayout({
     const resolvedParams = use(params)
     const pathname = usePathname()
     const router = useRouter()
-    const [profileName, setProfileName] = useState<string>("Cargando...")
-    const [loading, setLoading] = useState(true)
     const [isCreating, setIsCreating] = useState(false)
-
-    useEffect(() => {
-        if (resolvedParams.id === "new") {
-            setProfileName("Nuevo Agente")
-            setLoading(false)
-            
-            // Escuchar cambios en localStorage para actualizar el nombre en tiempo real
-            const updateNameFromDraft = () => {
-                const draft = localStorage.getItem("assistant_draft")
-                if (draft) {
-                    const data = JSON.parse(draft)
-                    if (data.name) setProfileName(data.name)
-                }
-            }
-            
-            updateNameFromDraft()
-            window.addEventListener('storage', updateNameFromDraft)
-            return () => window.removeEventListener('storage', updateNameFromDraft)
-        }
-
-        const fetchProfile = async () => {
-            try {
-                const res = await fetch(`/api/assistant/config/${resolvedParams.id}`)
-                if (res.ok) {
-                    const data = await res.json()
-                    setProfileName(data.profile.name)
-                }
-            } catch (error) {
-                console.error("Error loading profile info:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchProfile()
-    }, [resolvedParams.id])
 
     const handleCreateFinal = async () => {
         const draftStr = localStorage.getItem("assistant_draft")

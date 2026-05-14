@@ -66,8 +66,7 @@ export async function setConversationState(ctx: ConversationContext): Promise<vo
 
     if (!conversation) return
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingMeta = (conversation.metadata as any) || {}
+    const existingMeta = toMetadataRecord(conversation.metadata)
 
     await prisma.conversation.update({
         where: { id: conversation.id },
@@ -94,8 +93,7 @@ export async function clearConversationState(
 
     if (!conversation) return
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingMeta = (conversation.metadata as any) || {}
+    const existingMeta = toMetadataRecord(conversation.metadata)
     delete existingMeta.conversationState
 
     await prisma.conversation.update({
@@ -152,6 +150,14 @@ function createFreshState(userId: string, contactPhone: string): ConversationCon
         missingSlots: [],
         lastUpdated: Date.now(),
     }
+}
+
+function toMetadataRecord(value: unknown): Record<string, unknown> {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return {}
+    }
+
+    return { ...(value as Record<string, unknown>) }
 }
 
 /**

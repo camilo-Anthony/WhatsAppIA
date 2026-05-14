@@ -18,9 +18,15 @@
 
 import { prisma } from "@/lib/db"
 import { generateResponse, type AIMessage, type AIToolDefinition } from "../providers/groq"
-import { getUserTools, getGroqTools } from "@/lib/mcp/tool-registry"
+import { getUserTools } from "@/lib/mcp/tool-registry"
 import { routeToolCall } from "@/lib/mcp/tool-router"
 import { getMemories } from "@/lib/agent-memory"
+import {
+    escapePromptContent,
+    sanitizeModelInput,
+    SECURITY_REFUSAL_MESSAGE,
+    validateModelOutput,
+} from "@/lib/security/guardrails"
 
 // Agent modules
 import type {
@@ -29,7 +35,6 @@ import type {
     AgentStep,
     ToolSpec,
 } from "./types"
-import { MAX_TOOL_ITERATIONS } from "./types"
 import { buildSystemPrompt, createPromptContext } from "./prompt-builder"
 import { classifyIntent, quickClassify } from "./intent-classifier"
 import {
@@ -40,12 +45,11 @@ import {
     isConfirmationMessage,
 } from "./conversation-state"
 import { LoopDetector } from "./loop-detector"
-import { estimateTokens, trimHistory, fastTrimToolResults } from "./history-manager"
+import { trimHistory, fastTrimToolResults } from "./history-manager"
 import {
     classifyError,
     withRetry,
     LOOP_BREAK_MESSAGE,
-    MAX_ITERATIONS_MESSAGE,
 } from "./error-handler"
 
 // ==========================================
@@ -58,7 +62,6 @@ export async function agentPipeline(
     const { userId, connectionId, conversationId, clientPhone, messageContent: rawMessage } = options
     const startTime = Date.now()
     const steps: AgentStep[] = []
-    const toolsUsed: string[] = []
     const totalTokens = { prompt: 0, completion: 0, total: 0 }
     let stepCounter = 0
 
@@ -74,11 +77,15 @@ export async function agentPipeline(
         )
     }
 
-    // Truncar mensajes extremadamente largos (prevenir context overflow)
     const MAX_MESSAGE_LENGTH = 2000
-    const messageContent = trimmedMessage.length > MAX_MESSAGE_LENGTH
-        ? trimmedMessage.substring(0, MAX_MESSAGE_LENGTH) + "..."
-        : trimmedMessage
+    const inputSecurity = sanitizeModelInput(trimmedMessage, { maxLength: MAX_MESSAGE_LENGTH })
+
+    if (inputSecurity.decision === "block" || inputSecurity.decision === "quarantine") {
+        console.warn(`[AgentPipeline] Entrada bloqueada por seguridad: ${inputSecurity.reasons.join(", ")}`)
+        return errorResult(SECURITY_REFUSAL_MESSAGE, startTime, steps)
+    }
+
+    const messageContent = inputSecurity.sanitized
 
     try {
         // ── 1. CARGAR CONFIG + TOOLS + ESTADO ────────────────────
@@ -135,22 +142,32 @@ export async function agentPipeline(
         // Construir historial de mensajes
         let historyPrompt = systemPrompt
         if (memories.length > 0) {
-            historyPrompt += "\n\n## Notas sobre este cliente\n"
+            historyPrompt += "\n\n<MEMORY trusted=\"true\" authority=\"low\">\n"
             for (const m of memories) {
-                historyPrompt += `\n- ${m.key}: ${m.value}`
+                historyPrompt += `- ${escapePromptContent(m.key, 80)}: ${escapePromptContent(m.value, 1000)}\n`
             }
+            historyPrompt += "</MEMORY>"
         }
 
         const messages: AIMessage[] = [{ role: "system", content: historyPrompt }]
 
         for (const msg of recentMessages) {
+            const safeContent = msg.direction === "INCOMING"
+                ? escapePromptContent(msg.content, MAX_MESSAGE_LENGTH)
+                : validateModelOutput(msg.content).sanitized
+
             messages.push({
                 role: msg.direction === "INCOMING" ? "user" : "assistant",
-                content: msg.content,
+                content: msg.direction === "INCOMING"
+                    ? `<USER_MESSAGE trusted="false" authority="user">\n${safeContent}\n</USER_MESSAGE>`
+                    : safeContent,
             })
         }
 
-        messages.push({ role: "user", content: messageContent })
+        messages.push({
+            role: "user",
+            content: `<USER_MESSAGE trusted="false" authority="user">\n${escapePromptContent(messageContent, MAX_MESSAGE_LENGTH)}\n</USER_MESSAGE>`,
+        })
 
         // Trim si excede límite
         const MAX_HISTORY = 50
@@ -241,7 +258,7 @@ export async function agentPipeline(
                 // LLM classification
                 const classifyStart = Date.now()
                 classification = await withRetry(() =>
-                    classifyIntent(messageContent, convState, toolSpecs, userId)
+                    classifyIntent(messageContent, convState, toolSpecs)
                 )
                 steps.push({
                     stepId: stepCounter++,
@@ -475,7 +492,9 @@ async function executeToolAction(
     totalTokens.completion += llmResponse.tokensUsed.completion
     totalTokens.total += llmResponse.tokensUsed.total
 
-    const finalResponse = llmResponse.content || "Listo, la acción fue completada."
+    const finalResponse = finalizeModelResponse(
+        llmResponse.content || "Listo, la accion fue completada."
+    )
 
     steps.push({
         stepId: stepCounter++,
@@ -512,7 +531,7 @@ async function handleSlotCollection(
 ): Promise<AgentPipelineResult> {
     // Usar LLM para extraer datos del mensaje del usuario
     const extraction = await withRetry(() =>
-        classifyIntent(message, convState, toolSpecs, userId)
+        classifyIntent(message, convState, toolSpecs)
     )
 
     const newSlots = { ...convState.collectedSlots, ...extraction.extractedSlots }
@@ -602,10 +621,13 @@ async function generateSimpleLLMResponse(
     totalTokens.completion += response.tokensUsed.completion
     totalTokens.total += response.tokensUsed.total
 
+    const finalResponse = finalizeModelResponse(response.content || "En que puedo ayudarte?")
+    response.content = finalResponse
+
     steps.push({
         stepId: stepCounter,
         type: "response",
-        content: (response.content || "").substring(0, 200),
+        content: finalResponse.substring(0, 200),
         durationMs: Date.now() - llmStart,
         tokensUsed: response.tokensUsed.total,
     })
@@ -633,6 +655,10 @@ async function askForSlot(
     totalTokens: { prompt: number; completion: number; total: number }
 ): Promise<AgentPipelineResult> {
     // Agregar instrucción específica para pedir el slot
+    const safeIntentName = escapePromptContent(intentName, 120)
+    const safeSlotName = escapePromptContent(slotName, 120)
+    const safeSlots = escapePromptContent(JSON.stringify(collectedSlots), 1500)
+
     const askMessages: AIMessage[] = [
         ...messages,
         {
@@ -640,6 +666,9 @@ async function askForSlot(
             content: `El usuario quiere ejecutar "${intentName}". Ya tengo estos datos: ${JSON.stringify(collectedSlots)}. Necesito preguntarle por: "${slotName}". Haz UNA sola pregunta natural y concisa para obtener ese dato. NO menciones nombres técnicos de campos.`,
         },
     ]
+
+    askMessages[askMessages.length - 1].content =
+        `El usuario quiere ejecutar "${safeIntentName}". Ya tengo estos datos saneados: ${safeSlots}. Necesito preguntarle por: "${safeSlotName}". Haz UNA sola pregunta natural y concisa para obtener ese dato. No menciones nombres tecnicos de campos.`
 
     return await generateSimpleLLMResponse(
         askMessages,
@@ -659,6 +688,9 @@ async function askForConfirmation(
     stepCounter: number,
     totalTokens: { prompt: number; completion: number; total: number }
 ): Promise<AgentPipelineResult> {
+    const safeIntentName = escapePromptContent(intentName, 120)
+    const safeSlots = escapePromptContent(JSON.stringify(slots), 1500)
+
     const confirmMessages: AIMessage[] = [
         ...messages,
         {
@@ -666,6 +698,9 @@ async function askForConfirmation(
             content: `El usuario quiere ejecutar "${intentName}" con estos datos: ${JSON.stringify(slots)}. Muestra un resumen claro y natural de la acción que voy a realizar y pregunta "¿Confirmas?". Sé conciso, máximo 2-3 oraciones.`,
         },
     ]
+
+    confirmMessages[confirmMessages.length - 1].content =
+        `El usuario quiere ejecutar "${safeIntentName}" con estos datos saneados: ${safeSlots}. Muestra un resumen claro y natural de la accion que voy a realizar y pregunta "Confirmas?". Se conciso, maximo 2-3 oraciones.`
 
     const result = await generateSimpleLLMResponse(
         confirmMessages,
@@ -686,6 +721,10 @@ async function loadBusinessInfo(
     userId: string,
     config: { infoMode: string; simpleInfo: string | null }
 ): Promise<Array<{ label: string; value: string }>> {
+    if (config.simpleInfo) {
+        config.simpleInfo = escapePromptContent(config.simpleInfo, 2000)
+    }
+
     if (config.infoMode === "SIMPLE") {
         return config.simpleInfo
             ? [{ label: "Información", value: config.simpleInfo }]
@@ -696,6 +735,11 @@ async function loadBusinessInfo(
         where: { userId },
         orderBy: { order: "asc" },
     })
+
+    for (const field of fields) {
+        field.label = escapePromptContent(field.label, 80)
+        field.content = escapePromptContent(field.content, 2000)
+    }
 
     return fields.map((f) => ({ label: f.label, value: f.content }))
 }
@@ -713,6 +757,16 @@ function isReadOnlyTool(toolName: string): boolean {
     ]
     const lower = toolName.toLowerCase()
     return readOnlyPatterns.some((p) => lower.includes(p))
+}
+
+function finalizeModelResponse(response: string): string {
+    const validation = validateModelOutput(response)
+
+    if (!validation.allowed) {
+        console.warn(`[AgentPipeline] Salida del modelo bloqueada: ${validation.reasons.join(", ")}`)
+    }
+
+    return validation.sanitized || SECURITY_REFUSAL_MESSAGE
 }
 
 function errorResult(

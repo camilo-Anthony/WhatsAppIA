@@ -4,6 +4,9 @@
  */
 
 import type { MCPTool } from "../mcp-client"
+import type { calendar_v3 } from "googleapis"
+
+type CalendarClient = calendar_v3.Calendar
 
 // ==========================================
 // DEFINICIÓN DE HERRAMIENTAS
@@ -163,10 +166,8 @@ export async function executeCalendarTool(
 // IMPLEMENTACIÓN DE HERRAMIENTAS
 // ==========================================
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 async function checkAvailability(
-    calendar: any,
+    calendar: CalendarClient,
     calendarId: string,
     args: Record<string, unknown>,
     defaultTz: string
@@ -193,9 +194,9 @@ async function checkAvailability(
     }
 
     const busyTimes = busySlots
-        .map((slot: any) => {
-            const start = new Date(slot.start).toLocaleTimeString("es", { timeZone: timezone, hour: "2-digit", minute: "2-digit" })
-            const end = new Date(slot.end).toLocaleTimeString("es", { timeZone: timezone, hour: "2-digit", minute: "2-digit" })
+        .map((slot: calendar_v3.Schema$TimePeriod) => {
+            const start = new Date(slot.start || "").toLocaleTimeString("es", { timeZone: timezone, hour: "2-digit", minute: "2-digit" })
+            const end = new Date(slot.end || "").toLocaleTimeString("es", { timeZone: timezone, hour: "2-digit", minute: "2-digit" })
             return `${start} - ${end}`
         })
         .join(", ")
@@ -204,7 +205,7 @@ async function checkAvailability(
 }
 
 async function listEvents(
-    calendar: any,
+    calendar: CalendarClient,
     calendarId: string,
     args: Record<string, unknown>,
     defaultTz: string
@@ -230,7 +231,7 @@ async function listEvents(
     }
 
     const eventList = events
-        .map((event: any) => {
+        .map((event: calendar_v3.Schema$Event) => {
             const start = event.start?.dateTime
                 ? new Date(event.start.dateTime).toLocaleTimeString("es", { timeZone: timezone, hour: "2-digit", minute: "2-digit" })
                 : "Todo el día"
@@ -242,7 +243,7 @@ async function listEvents(
 }
 
 async function createEvent(
-    calendar: any,
+    calendar: CalendarClient,
     calendarId: string,
     args: Record<string, unknown>,
     defaultTz: string
@@ -282,7 +283,7 @@ async function createEvent(
 }
 
 async function cancelEvent(
-    calendar: any,
+    calendar: CalendarClient,
     calendarId: string,
     args: Record<string, unknown>
 ): Promise<string> {
@@ -295,8 +296,6 @@ async function cancelEvent(
 
     return `Evento ${eventId} cancelado exitosamente.`
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ==========================================
 // HELPERS

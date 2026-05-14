@@ -6,6 +6,7 @@
  */
 
 import { prisma } from "@/lib/db"
+import { classifyMemoryForStorage } from "@/lib/security/guardrails"
 
 // ==========================================
 // TIPOS
@@ -78,17 +79,24 @@ export async function getMemories(opts: GetMemoriesOptions): Promise<Memory[]> {
  */
 export async function saveMemory(opts: SaveMemoryOptions): Promise<void> {
     const { userId, phone = null, key, value, category = "general" } = opts
+    const decision = classifyMemoryForStorage({ key, value, category })
+
+    if (!decision.allowed) {
+        console.warn(`[AgentMemory] Memoria rechazada: ${decision.reason}`)
+        return
+    }
 
     // Prisma compound unique doesn't support null in where, so manual check
     const existing = await prisma.agentMemory.findFirst({
-        where: { userId, phone, key },
+        where: { userId, phone, key: decision.sanitizedKey },
     })
 
     if (existing) {
         await prisma.agentMemory.update({
             where: { id: existing.id },
             data: {
-                value,
+                value: decision.sanitizedValue,
+                category: decision.category,
                 score: 1.0,
                 updatedAt: new Date(),
             },
@@ -98,9 +106,9 @@ export async function saveMemory(opts: SaveMemoryOptions): Promise<void> {
             data: {
                 userId,
                 phone,
-                key,
-                value,
-                category,
+                key: decision.sanitizedKey,
+                value: decision.sanitizedValue,
+                category: decision.category,
                 score: 1.0,
             },
         })

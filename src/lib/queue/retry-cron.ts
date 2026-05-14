@@ -9,27 +9,31 @@
  */
 
 import { prisma } from "../db"
+import type { QueueName } from "./dispatcher"
+import type { AIProcessingJob } from "./ai-processing"
+import type { IncomingMessageJob } from "./incoming"
+import type { OutgoingMessageJob } from "./outgoing"
 
 const BATCH_SIZE = 50
+type QueuePayload = IncomingMessageJob | AIProcessingJob | OutgoingMessageJob
 
 /**
  * Procesa un job directamente llamando a la lógica de negocio,
  * puenteando BullMQ completamente.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function processJobDirectly(job: { queue: string; payload: any }) {
-    const queue = job.queue
-    const payload = job.payload
+async function processJobDirectly(job: { queue: string; payload: unknown }) {
+    const queue = job.queue as QueueName
+    const payload = job.payload as QueuePayload
 
     if (queue === "incoming") {
         const { handleIncomingMessage } = await import("./incoming")
-        await handleIncomingMessage(payload)
+        await handleIncomingMessage(payload as IncomingMessageJob)
     } else if (queue === "ai-processing") {
         const { handleAIProcessing } = await import("./ai-processing")
-        await handleAIProcessing(payload)
+        await handleAIProcessing(payload as AIProcessingJob)
     } else if (queue === "outgoing") {
         const { handleOutgoingMessage } = await import("./outgoing")
-        await handleOutgoingMessage(payload)
+        await handleOutgoingMessage(payload as OutgoingMessageJob)
     } else {
         throw new Error(`Queue ${queue} not supported for direct processing`)
     }

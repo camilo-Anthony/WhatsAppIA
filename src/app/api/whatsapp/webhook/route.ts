@@ -72,7 +72,6 @@ export async function POST(request: NextRequest) {
 
                 const metadata = value.metadata
                 const phoneNumberId = metadata?.phone_number_id
-                const displayPhone = metadata?.display_phone_number
 
                 if (!phoneNumberId) continue
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
+import type { ReactNode } from "react"
 import { useSearchParams } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
 import { 
@@ -44,6 +45,19 @@ interface AssistantProfile {
 
 type ConnectionType = "QR" | "OWN_ACCOUNT" | "MANAGED"
 type RegistrationStep = "phone_input" | "verify_code" | "success"
+
+interface ConnectionOption {
+    type: ConnectionType
+    icon: ReactNode
+    title: string
+    subtitle: string
+    description: string
+    pros: string[]
+    cons: string[]
+    tag: string
+    recommended: boolean
+    inDevelopment?: boolean
+}
 
 // ==========================================
 // UTILIDADES
@@ -290,7 +304,7 @@ function ConnectionTypeSelector({
         return () => window.removeEventListener("keydown", handleKeyDown)
     }, [onClose])
 
-    const options = [
+    const options: ConnectionOption[] = [
         {
             type: "QR" as ConnectionType,
             icon: <QrCode size={28} />,
@@ -344,13 +358,13 @@ function ConnectionTypeSelector({
                     {options.map((opt) => (
                         <div
                             key={opt.type}
-                            className={`${styles.typeCardCol} ${opt.recommended && !opt.inDevelopment ? styles.typeCardColRecommended : ""} ${(opt as any).inDevelopment ? styles.typeCardColDisabled : ""}`}
+                            className={`${styles.typeCardCol} ${opt.recommended && !opt.inDevelopment ? styles.typeCardColRecommended : ""} ${opt.inDevelopment ? styles.typeCardColDisabled : ""}`}
                             role="button"
-                            tabIndex={(opt as any).inDevelopment ? -1 : 0}
-                            onClick={() => !(opt as any).inDevelopment && onSelect(opt.type)}
-                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { if (!(opt as any).inDevelopment) onSelect(opt.type) } }}
+                            tabIndex={opt.inDevelopment ? -1 : 0}
+                            onClick={() => !opt.inDevelopment && onSelect(opt.type)}
+                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { if (!opt.inDevelopment) onSelect(opt.type) } }}
                         >
-                            {(opt as any).inDevelopment ? (
+                            {opt.inDevelopment ? (
                                 <span className={styles.developmentBadgeCol}>En desarrollo</span>
                             ) : opt.recommended ? (
                                 <span className={styles.recommendedBadgeCol}>Recomendado</span>

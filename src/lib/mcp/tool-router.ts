@@ -4,6 +4,7 @@
  */
 
 import { prisma } from "@/lib/db"
+import { authorizeToolCall } from "@/lib/security/guardrails"
 import { findTool, type RegisteredTool } from "./tool-registry"
 
 // ==========================================
@@ -75,6 +76,42 @@ export async function routeToolCall(request: ToolCallRequest): Promise<ToolCallR
         where: { id: tool.integrationId },
     })
 
+    const policy = authorizeToolCall({
+        userId,
+        toolName,
+        arguments: args,
+        conversationId,
+        enabledTools: integration?.enabledTools,
+        allowedScopes: integration?.allowedScopes,
+        isActive: integration?.isActive,
+        provider: integration?.provider,
+    })
+
+    if (!policy.allowed) {
+        await prisma.toolExecution.create({
+            data: {
+                integrationId: tool.integrationId,
+                accountId: tool.accountId,
+                conversationId,
+                toolName: tool.name,
+                input: JSON.parse(JSON.stringify(policy.sanitizedArguments)),
+                status: "failed",
+                attempt: 1,
+                durationMs: Date.now() - startTime,
+                error: `TOOL_POLICY_DENIED: ${policy.reason}`,
+            },
+        })
+
+        return {
+            success: false,
+            result: "La accion fue bloqueada por politicas de seguridad.",
+            durationMs: Date.now() - startTime,
+            error: "TOOL_POLICY_DENIED",
+        }
+    }
+
+    const safeArgs = policy.sanitizedArguments
+
     if (integration?.allowedScopes) {
         const scopes = integration.allowedScopes as string[]
         const requiredScope = getRequiredScope(tool)
@@ -103,7 +140,7 @@ export async function routeToolCall(request: ToolCallRequest): Promise<ToolCallR
                 accountId: tool.accountId,
                 conversationId,
                 toolName: tool.name,
-                input: JSON.parse(JSON.stringify(args)),
+                input: JSON.parse(JSON.stringify(safeArgs)),
                 status: "running",
                 attempt,
             },
@@ -112,7 +149,7 @@ export async function routeToolCall(request: ToolCallRequest): Promise<ToolCallR
         try {
             const result = await executeWithTimeout(
                 tool,
-                args,
+                safeArgs,
                 account.credentials as Record<string, unknown>,
                 account.config as Record<string, unknown> | null,
                 TOOL_TIMEOUT_MS

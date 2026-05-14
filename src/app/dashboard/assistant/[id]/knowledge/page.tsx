@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import styles from "../../assistant.module.css"
 
 interface InfoField {
@@ -32,11 +31,7 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
     const resolvedParams = use(params)
     const [config, setConfig] = useState<AssistantConfig | null>(null)
     const [infoFields, setInfoFields] = useState<InfoField[]>(DEFAULT_FIELDS)
-    const [saving, setSaving] = useState(false)
-    const [saved, setSaved] = useState(false)
     const [loading, setLoading] = useState(true)
-
-    const _router = useRouter()
 
     const loadConfig = useCallback(async () => {
         if (resolvedParams.id === "new") {
@@ -129,8 +124,6 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
 
     const handleSave = useCallback(async () => {
         if (!config || resolvedParams.id === "new") return
-        setSaving(true)
-        setSaved(false)
 
         try {
             await fetch(`/api/assistant/config/${resolvedParams.id}`, {
@@ -153,13 +146,8 @@ export default function AssistantKnowledgePage({ params }: { params: Promise<{ i
                     }),
                 })
             }
-
-            setSaved(true)
-            setTimeout(() => setSaved(false), 3000)
         } catch (error) {
             console.error("Error saving:", error)
-        } finally {
-            setSaving(false)
         }
     }, [config, infoFields, resolvedParams.id])
 

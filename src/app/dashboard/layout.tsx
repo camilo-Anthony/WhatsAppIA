@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import { signOut, useSession } from "next-auth/react"
 import Link from "next/link"
 import { SessionProvider } from "next-auth/react"
@@ -78,17 +78,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [sidebarOpen, setSidebarOpen] = useState(false)
-    const prevPathname = useRef(pathname)
-
-    // Close sidebar on route change
-    /* eslint-disable react-hooks/set-state-in-effect */
-    useEffect(() => {
-        if (prevPathname.current !== pathname) {
-            prevPathname.current = pathname
-            setSidebarOpen(false)
-        }
-    }, [pathname])
-    /* eslint-enable react-hooks/set-state-in-effect */
 
     return (
         <div className={styles.layout}>
@@ -108,7 +97,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
             <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`}>
                 <div className={styles.sidebarHeader}>
-                    <Link href="/dashboard" className={styles.sidebarLogo}>
+                    <Link href="/dashboard" className={styles.sidebarLogo} onClick={() => setSidebarOpen(false)}>
                         <Logo size={32} />
                         <span className={styles.sidebarLogoText}>WhatsApp IA</span>
                     </Link>
@@ -127,6 +116,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                     <Link
                                         key={item.href}
                                         href={item.href}
+                                        onClick={() => setSidebarOpen(false)}
                                         className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
                                     >
                                         {item.icon}

@@ -4,6 +4,12 @@
  */
 
 import Groq from "groq-sdk"
+import type {
+    ChatCompletionCreateParamsNonStreaming,
+    ChatCompletionMessageParam,
+    ChatCompletionMessageToolCall,
+    ChatCompletionTool,
+} from "groq-sdk/resources/chat/completions"
 
 let groq: Groq;
 export function getGroqClient() {
@@ -73,9 +79,8 @@ export async function generateResponse(
     } = options || {}
 
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const requestParams: any = {
-            messages: messages.map((m) => {
+        const requestParams: ChatCompletionCreateParamsNonStreaming = {
+            messages: messages.map((m): ChatCompletionMessageParam => {
                 if (m.role === "tool") {
                     return {
                         role: "tool" as const,
@@ -109,7 +114,7 @@ export async function generateResponse(
 
         // Solo agregar tools si hay disponibles
         if (tools && tools.length > 0) {
-            requestParams.tools = tools.map((t) => ({
+            requestParams.tools = tools.map((t): ChatCompletionTool => ({
                 type: "function" as const,
                 function: {
                     name: t.function.name,
@@ -126,7 +131,7 @@ export async function generateResponse(
         const message = choice?.message
 
         // Extraer tool calls si existen
-        const toolCalls: AIToolCall[] = (message?.tool_calls || []).map((tc) => ({
+        const toolCalls: AIToolCall[] = (message?.tool_calls || []).map((tc: ChatCompletionMessageToolCall) => ({
             id: tc.id,
             type: "function" as const,
             function: {
