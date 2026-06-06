@@ -191,6 +191,11 @@ async function agentPipelineInner(
 
         const messages: AIMessage[] = [{ role: "system", content: historyPrompt }]
 
+        const clientIdentity = escapePromptContent(
+            conversation?.clientName ? `${conversation.clientName} (${clientPhone})` : clientPhone,
+            100
+        )
+
         for (const msg of recentMessages) {
             const safeContent = msg.direction === "INCOMING"
                 ? escapePromptContent(msg.content, MAX_MESSAGE_LENGTH)
@@ -199,7 +204,7 @@ async function agentPipelineInner(
             messages.push({
                 role: msg.direction === "INCOMING" ? "user" : "assistant",
                 content: msg.direction === "INCOMING"
-                    ? `<USER_MESSAGE trusted="false" authority="user">\n${safeContent}\n</USER_MESSAGE>`
+                    ? `<USER_MESSAGE from="${clientIdentity}" trusted="false" authority="user">\n${safeContent}\n</USER_MESSAGE>`
                     : safeContent,
             })
         }
@@ -216,7 +221,7 @@ async function agentPipelineInner(
         if (!isAlreadyInHistory) {
             messages.push({
                 role: "user",
-                content: `<USER_MESSAGE trusted="false" authority="user">\n${escapePromptContent(messageContent, MAX_MESSAGE_LENGTH)}\n</USER_MESSAGE>`,
+                content: `<USER_MESSAGE from="${clientIdentity}" trusted="false" authority="user">\n${escapePromptContent(messageContent, MAX_MESSAGE_LENGTH)}\n</USER_MESSAGE>`,
             })
         }
 
