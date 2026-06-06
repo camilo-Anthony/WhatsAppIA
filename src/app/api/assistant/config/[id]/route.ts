@@ -6,7 +6,7 @@ import { z } from "zod"
 const profileSchema = z.object({
     name: z.string().min(1, "El nombre es requerido").optional(),
     behaviorPrompt: z.string().min(10, "El prompt debe tener al menos 10 caracteres").optional(),
-    infoMode: z.enum(["SIMPLE", "ADVANCED"]).optional(),
+    infoMode: z.enum(["SIMPLE", "ADVANCED", "RAG"]).optional(),
     simpleInfo: z.string().optional(),
 })
 
@@ -41,10 +41,17 @@ export async function GET(
 
         // Obtener los InfoFields asociados (actualmente están atados al usuario de forma global, 
         // pero se mantendrán por compatibilidad hasta que migremos InfoField para que dependan de AssistantConfig)
-        const infoFields = await prisma.infoField.findMany({
-            where: { userId: session.user.id },
+        let infoFields = await prisma.infoField.findMany({
+            where: { userId: session.user.id, assistantConfigId: profileId },
             orderBy: { order: "asc" },
         })
+
+        if (infoFields.length === 0) {
+            infoFields = await prisma.infoField.findMany({
+                where: { userId: session.user.id, assistantConfigId: null },
+                orderBy: { order: "asc" },
+            })
+        }
 
         return NextResponse.json({ profile, infoFields })
     } catch (error) {
@@ -123,6 +130,17 @@ export async function DELETE(
         if (!existingProfile) {
             return NextResponse.json({ error: "Perfil no encontrado" }, { status: 404 })
         }
+
+        // Desasociar conexiones que usan este perfil
+        await prisma.whatsAppConnection.updateMany({
+            where: { assistantConfigId: profileId },
+            data: { assistantConfigId: null },
+        })
+
+        // Eliminar info fields asociados
+        await prisma.infoField.deleteMany({
+            where: { assistantConfigId: profileId },
+        })
 
         await prisma.assistantConfig.delete({
             where: { id: profileId },

@@ -1,7 +1,6 @@
 /**
  * Agent Pipeline — Loop de control determinístico del agente.
  *
- * Port de ZeroClaw `agent/agent.rs` → Agent.turn() adaptado para WhatsApp.
  * Este módulo es el cerebro del agente: coordina todos los demás módulos
  * para procesar cada mensaje de forma predecible.
  *
@@ -17,10 +16,11 @@
  */
 
 import { prisma } from "@/lib/db"
-import { generateResponse, type AIMessage, type AIToolDefinition } from "../providers/groq"
+import { generateResponse, type AIMessage, type AIToolDefinition } from "../providers/llm"
 import { getUserTools } from "@/lib/mcp/tool-registry"
 import { routeToolCall } from "@/lib/mcp/tool-router"
-import { getMemories } from "@/lib/agent-memory"
+import { getMemories, saveMemory, decayMemories } from "@/lib/agent-memory"
+import { LightRAGClient } from "../rag/lightrag-client"
 import {
     escapePromptContent,
     sanitizeModelInput,
@@ -57,6 +57,42 @@ import {
 // ==========================================
 
 export async function agentPipeline(
+    options: AgentPipelineOptions
+): Promise<AgentPipelineResult> {
+    const result = await agentPipelineInner(options)
+    
+    // Trigger learning asynchronously — saves facts to PostgreSQL (agent_memories)
+    try {
+        const { userId, clientPhone, messageContent } = options
+        const connectionScope = await prisma.whatsAppConnection.findUnique({
+            where: { id: options.connectionId },
+            select: { assistantConfigId: true },
+        })
+        const assistantConfigId = connectionScope?.assistantConfigId ?? null
+        if (result.response && !isTrivialMessage(messageContent)) {
+            const lowerRes = result.response.toLowerCase()
+            if (!lowerRes.includes("cancelado") && !lowerRes.includes("error") && !lowerRes.includes("no autorizado")) {
+                learnFromInteraction(
+                    userId,
+                    assistantConfigId,
+                    clientPhone,
+                    messageContent,
+                    result.response
+                ).catch(err => console.error("[DynamicLearning] Background task error:", err))
+            }
+        }
+        // Degradar memorias antiguas ~1 de cada 10 interacciones (limpieza automática)
+        if (Math.random() < 0.1) {
+            decayMemories(userId, assistantConfigId).catch(() => {})
+        }
+    } catch (e) {
+        console.error("[DynamicLearning] Error resolving connection for learning:", e)
+    }
+
+    return result
+}
+
+async function agentPipelineInner(
     options: AgentPipelineOptions
 ): Promise<AgentPipelineResult> {
     const { userId, connectionId, conversationId, clientPhone, messageContent: rawMessage } = options
@@ -112,8 +148,8 @@ export async function agentPipeline(
             parameters: t.groqTool.function.parameters,
         }))
 
-        // Cargar info del negocio
-        const businessInfo = await loadBusinessInfo(userId, config)
+        // Cargar conocimiento configurado
+        const businessInfo = await loadBusinessInfo(userId, config, messageContent)
 
         // ── 2. CONSTRUIR SYSTEM PROMPT ───────────────────────────
 
@@ -137,14 +173,18 @@ export async function agentPipeline(
         })
 
         const recentMessages = conversation?.messages?.reverse() || []
-        const memories = await getMemories({ userId, phone: clientPhone })
+        const memories = await getMemories({ userId, assistantConfigId: config.id, phone: clientPhone, limit: 15 })
 
         // Construir historial de mensajes
         let historyPrompt = systemPrompt
         if (memories.length > 0) {
             historyPrompt += "\n\n<MEMORY trusted=\"true\" authority=\"low\">\n"
+            let charBudget = 2000 // ~500 tokens max para memorias
             for (const m of memories) {
-                historyPrompt += `- ${escapePromptContent(m.key, 80)}: ${escapePromptContent(m.value, 1000)}\n`
+                const line = `- ${escapePromptContent(m.key, 50)}: ${escapePromptContent(m.value, 200)}\n`
+                if (charBudget - line.length < 0) break
+                charBudget -= line.length
+                historyPrompt += line
             }
             historyPrompt += "</MEMORY>"
         }
@@ -719,8 +759,22 @@ async function askForConfirmation(
 
 async function loadBusinessInfo(
     userId: string,
-    config: { infoMode: string; simpleInfo: string | null }
+    config: { id: string; infoMode: string; simpleInfo: string | null },
+    userQuery?: string
 ): Promise<Array<{ label: string; value: string }>> {
+    if (config.infoMode === "RAG" && userQuery) {
+        try {
+            const ragClient = new LightRAGClient()
+            const context = await ragClient.query(config.id, userQuery, "hybrid")
+            if (context && context.trim().length > 0) {
+                return [{ label: "Información relevante de base de conocimiento", value: context }]
+            }
+        } catch (err) {
+            console.error("[loadBusinessInfo] Error al consultar LightRAG:", err)
+        }
+        return []
+    }
+
     if (config.simpleInfo) {
         config.simpleInfo = escapePromptContent(config.simpleInfo, 2000)
     }
@@ -731,10 +785,17 @@ async function loadBusinessInfo(
             : []
     }
 
-    const fields = await prisma.infoField.findMany({
-        where: { userId },
+    let fields = await prisma.infoField.findMany({
+        where: { userId, assistantConfigId: config.id },
         orderBy: { order: "asc" },
     })
+
+    if (fields.length === 0) {
+        fields = await prisma.infoField.findMany({
+            where: { userId, assistantConfigId: null },
+            orderBy: { order: "asc" },
+        })
+    }
 
     for (const field of fields) {
         field.label = escapePromptContent(field.label, 80)
@@ -803,4 +864,96 @@ function simpleResponse(
         totalDurationMs: Date.now() - startTime,
         finalState: state,
     }
+}
+
+/**
+ * Aprendizaje dinámico: Extrae hechos de la interacción y los guarda en PostgreSQL (agent_memories).
+ * Cada hecho se almacena como key-value aislado por teléfono del cliente.
+ */
+async function learnFromInteraction(
+    userId: string,
+    assistantConfigId: string | null,
+    clientPhone: string,
+    userMessage: string,
+    assistantResponse: string
+): Promise<void> {
+    try {
+        const extractionPrompt = `Analiza esta interacción y extrae datos factuales del usuario.
+Responde SOLO en formato JSON array. Cada elemento debe tener "key" (categoría corta) y "value" (dato concreto).
+Categorías válidas: nombre, telefono, empresa, cargo, preferencia, direccion, email, dato_clave.
+Si no hay información relevante, responde: []
+
+Ejemplo de respuesta:
+[{"key": "nombre", "value": "Camilo"}, {"key": "empresa", "value": "HostalApp"}]
+
+Interacción:
+Usuario: ${userMessage}
+Asistente: ${assistantResponse}
+
+JSON:`
+
+        const response = await generateResponse([
+            { role: "system", content: "Extrae hechos factuales en formato JSON array. Solo hechos confirmados del usuario. Responde SOLO el JSON, nada más." },
+            { role: "user", content: extractionPrompt }
+        ], {
+            temperature: 0.1,
+            maxTokens: 256
+        })
+
+        const raw = response.content?.trim()
+        if (!raw || raw === "[]" || raw.length < 5) return
+
+        // Parse JSON from response (handle markdown code blocks)
+        let jsonStr = raw
+        const jsonMatch = raw.match(/\[[\s\S]*\]/)
+        if (jsonMatch) jsonStr = jsonMatch[0]
+
+        const facts: Array<{ key: string; value: string }> = JSON.parse(jsonStr)
+        if (!Array.isArray(facts) || facts.length === 0) return
+
+        console.log(`[DynamicLearning] ${facts.length} hechos extraídos para ${clientPhone}`)
+
+        for (const fact of facts) {
+            if (fact.key && fact.value) {
+                await saveMemory({
+                    userId,
+                    assistantConfigId,
+                    phone: clientPhone,
+                    key: fact.key,
+                    value: fact.value,
+                    category: "fact",
+                })
+            }
+        }
+
+        console.log(`[DynamicLearning] Hechos guardados en PostgreSQL para ${clientPhone}`)
+    } catch (error) {
+        console.error("[DynamicLearning] Error en aprendizaje dinámico:", error)
+    }
+}
+
+/**
+ * Detecta mensajes triviales que NO contienen información útil para aprender.
+ * Evita gastar tokens de Groq en extracción de hechos vacía.
+ */
+function isTrivialMessage(msg: string): boolean {
+    const clean = msg.trim().toLowerCase()
+    
+    // Muy corto (menos de 10 chars) → trivial
+    if (clean.length < 10) return true
+    
+    // Solo emojis/símbolos
+    if (/^[\p{Emoji}\s\p{P}]+$/u.test(clean)) return true
+    
+    // Palabras triviales comunes en WhatsApp
+    const trivialPatterns = [
+        /^(hola|hi|hey|buenas?|buenos?\s*(d[ií]as?|tardes?|noches?))\s*[!.?]*$/,
+        /^(ok|okey|okay|dale|vale|listo|perfecto|genial|gracias|grax|thx|thanks)\s*[!.?]*$/,
+        /^(s[ií]|no|claro|ya|bueno|bien|exacto|correcto)\s*[!.?]*$/,
+        /^(chao|bye|adi[oó]s|hasta\s*luego|nos\s*vemos)\s*[!.?]*$/,
+        /^(ja+|je+|ji+|jo+|ha+|he+|lol|xd+|jaj[aj]*)\s*[!.?]*$/,
+        /^[👍👌🙏❤️😊😂🤣💪✅]+$/,
+    ]
+    
+    return trivialPatterns.some(p => p.test(clean))
 }

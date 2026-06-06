@@ -29,6 +29,7 @@ enum ConnectionStatus {
 enum InfoMode {
   SIMPLE
   ADVANCED
+  RAG
 }
 
 enum MessageDirection {
@@ -155,6 +156,8 @@ model AssistantConfig {
   user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   connections WhatsAppConnection[]
   infoFields  InfoField[]
+  documents   KnowledgeDocument[]
+  memories    AgentMemory[]
 
   @@index([userId])
   @@map("assistant_configs")
@@ -320,19 +323,22 @@ model ToolExecution {
 // ==========================================
 
 model AgentMemory {
-  id        String   @id @default(cuid())
-  userId    String
-  phone     String?  // null = global, set = per-client
-  key       String
-  value     String   @db.Text
-  category  String   @default("general") // preference | fact | instruction
-  score     Float    @default(1.0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(cuid())
+  userId            String
+  assistantConfigId String?
+  phone             String?  // null = global for this assistant, set = per-client
+  key               String
+  value             String   @db.Text
+  category          String   @default("general") // preference | fact | instruction
+  score             Float    @default(1.0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  @@unique([userId, phone, key])
-  @@index([userId, phone])
-  @@index([userId, phone, score])
+  assistantConfig AssistantConfig? @relation(fields: [assistantConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assistantConfigId, phone, key])
+  @@index([userId, assistantConfigId, phone])
+  @@index([userId, assistantConfigId, phone, score])
   @@map("agent_memories")
 }
 
@@ -355,4 +361,22 @@ model AgentRun {
   @@index([conversationId])
   @@index([createdAt])
   @@map("agent_runs")
+}
+
+model KnowledgeDocument {
+  id                String          @id @default(cuid())
+  userId            String
+  assistantConfigId String
+  filename          String
+  fileType          String          // "pdf" | "docx" | "txt" | "md"
+  fileSize          Int
+  processed         Boolean         @default(false)
+  error             String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  assistantConfig   AssistantConfig @relation(fields: [assistantConfigId], references: [id], onDelete: Cascade)
+
+  @@index([assistantConfigId])
+  @@map("knowledge_documents")
 }

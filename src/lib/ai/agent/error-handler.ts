@@ -1,7 +1,7 @@
 /**
  * Error Handler — Manejo de errores del pipeline del agente.
  *
- * Cubre los errores identificados en el análisis de ZeroClaw:
+ * Cubre errores operativos comunes del agente:
  *   - Groq rate limit (429) → retry con exponential backoff
  *   - Context length exceeded → comprimir y reintentar
  *   - Tool execution failure → error limpio, no crash
@@ -45,7 +45,7 @@ export function classifyError(error: unknown): AgentError {
     const lower = message.toLowerCase()
 
     // Rate limit (429)
-    if (lower.includes("429") || lower.includes("rate limit") || lower.includes("too many requests")) {
+    if (lower.includes("429") || lower.includes("rate limit") || lower.includes("rate_limit") || lower.includes("too many requests")) {
         return {
             type: "RATE_LIMIT",
             message,

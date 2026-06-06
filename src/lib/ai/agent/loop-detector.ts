@@ -1,7 +1,6 @@
 /**
  * Loop Detector — Detección de patrones repetitivos en tool calls.
  *
- * Port directo de ZeroClaw `agent/loop_detector.rs`.
  * Monitorea una sliding window de tool calls recientes y detecta 3 patrones:
  *
  * 1. Exact Repeat — misma tool + mismos args 3+ veces consecutivas

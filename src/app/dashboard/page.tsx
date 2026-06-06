@@ -80,9 +80,9 @@ export default async function DashboardPage() {
         },
     ]
 
-    // BUG-003: Build the correct knowledge link
+    // Build the correct knowledge link pointing to studio
     const knowledgeHref = primaryAssistantId
-        ? `/dashboard/assistant/${primaryAssistantId}/knowledge`
+        ? `/dashboard/assistant/${primaryAssistantId}`
         : `/dashboard/assistant`
 
     return (
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
                     <Link href={knowledgeHref} className={`card card-interactive ${styles.actionCard}`}>
                         <div className={styles.actionNumber}>3</div>
                         <h3>Información</h3>
-                        <p>Agrega los datos del negocio que el bot usará para responder</p>
+                        <p>Agrega los datos autorizados que el agente usara para responder</p>
                     </Link>
                 </div>
             </div>

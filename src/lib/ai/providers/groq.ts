@@ -69,6 +69,7 @@ export async function generateResponse(
         maxTokens?: number
         model?: string
         tools?: AIToolDefinition[]
+        apiKey?: string
     }
 ): Promise<AIResponse> {
     const {
@@ -76,9 +77,11 @@ export async function generateResponse(
         maxTokens = 1024,
         model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         tools,
+        apiKey,
     } = options || {}
 
     try {
+        const client = apiKey ? new Groq({ apiKey }) : getGroqClient();
         const requestParams: ChatCompletionCreateParamsNonStreaming = {
             messages: messages.map((m): ChatCompletionMessageParam => {
                 if (m.role === "tool") {

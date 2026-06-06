@@ -23,6 +23,23 @@ services:
     volumes:
       - redis_data:/data
 
+  lightrag:
+    build:
+      context: ./lightrag-service
+      dockerfile: Dockerfile
+    container_name: whatsappia_lightrag
+    restart: unless-stopped
+    ports:
+      - '9621:9621'
+    volumes:
+      - ./rag_storage:/app/rag_storage
+    environment:
+      - LLM_MODEL=${LIGHTRAG_LLM_MODEL:-gpt-4o-mini}
+      - EMBEDDING_MODEL=${LIGHTRAG_EMBEDDING_MODEL:-text-embedding-3-small}
+      - OPENAI_API_KEY=${LIGHTRAG_API_KEY:-${OPENAI_API_KEY}}
+      - OPENAI_BASE_URL=${LIGHTRAG_BASE_URL:-https://api.openai.com/v1}
+
 volumes:
   postgres_data:
   redis_data:
+

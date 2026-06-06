@@ -53,3 +53,24 @@ docs/
 # zero
 zero/
 zeroclaw-study/
+
+# Python virtual environments
+.venv/
+venv/
+lightrag-service/.venv/
+
+# RAG local storage and logs
+rag_storage/
+lightrag-service/rag_storage/
+lightrag-service/inputs/
+lightrag-service/outputs/
+lightrag.log
+/logs/
+/test-results/
+/playwright-report/
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+

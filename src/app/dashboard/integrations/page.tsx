@@ -53,7 +53,7 @@ const AVAILABLE_PROVIDERS: ProviderInfo[] = [
         provider: "NOTION",
         name: "Notion",
         type: "KNOWLEDGE",
-        description: "Consulta y crea páginas en Notion. Base de conocimiento del negocio.",
+        description: "Consulta y crea paginas en Notion. Base de conocimiento configurada.",
         icon: <Book size={24} />,
         iconClass: "iconNotion",
         available: false,

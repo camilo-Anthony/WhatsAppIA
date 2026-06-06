@@ -1,8 +1,7 @@
 /**
  * Intent Classifier — Clasificación de intenciones via LLM.
  *
- * Inspirado en ZeroClaw `agent/classifier.rs` pero usando LLM con
- * JSON output forzado en vez de keyword matching, porque los mensajes
+ * Usa LLM con JSON output forzado en vez de keyword matching, porque los mensajes
  * de WhatsApp son ambiguos y en español/informal.
  *
  * El LLM SOLO clasifica — no genera respuesta.
@@ -11,7 +10,7 @@
  * @module agent/intent-classifier
  */
 
-import { generateResponse, type AIMessage } from "../providers/groq"
+import { generateResponse, type AIMessage } from "../providers/llm"
 import type { ClassificationResult, ToolSpec, ConversationContext } from "./types"
 
 // ==========================================
@@ -35,7 +34,7 @@ ${toolList}
 
 ### Categorías especiales:
 - greeting: saludo simple (hola, buenos días, etc.)
-- info: pregunta sobre el negocio, servicios, precios
+- info: pregunta sobre conocimiento configurado, datos disponibles o alcance del agente
 - followup: respuesta a una pregunta anterior del asistente
 - unknown: no se puede determinar la intención
 
@@ -45,7 +44,7 @@ ${toolList}
 
 ## Reglas de clasificación
 1. Si el mensaje es un saludo simple → "greeting"
-2. Si pregunta sobre el negocio → "info"
+2. Si pregunta sobre conocimiento configurado o datos disponibles → "info"
 3. Si responde a una pregunta previa (dando datos) → "followup"
 4. Si pide una acción que coincide con una tool → nombre de la tool
 5. Si no encaja en nada → "unknown"
@@ -120,7 +119,6 @@ export async function classifyIntent(
 /**
  * Clasificación rápida por keywords (sin LLM).
  * Complemento al LLM para casos obvios y ahorrar tokens.
- * Inspirado en classifier.rs → classify_with_decision.
  */
 export function quickClassify(message: string): ClassificationResult | null {
     const lower = message.toLowerCase().trim()

@@ -137,7 +137,7 @@ const OUTPUT_SECRET_PATTERNS: RiskRule[] = [
     {
         id: "system_prompt_tag",
         reason: "salida contiene etiquetas internas de prompt",
-        pattern: /<\/?(SYSTEM_RULES|CORE_SYSTEM_RULES|SYSTEM_INSTRUCTIONS|PERSONALITY_CONFIG|MEMORY|USER_MESSAGE)\b/i,
+        pattern: /<\/?(SYSTEM_RULES|CORE_SYSTEM_RULES|SYSTEM_INSTRUCTIONS|PERSONALITY_CONFIG|MEMORY|USER_MESSAGE|DASHBOARD_CONFIG|DASHBOARD_KNOWLEDGE|AGENT_IDENTITY|MISSION|TONE_AND_FORMAT|STRICT_CONSTRAINTS)\b/i,
         weight: 1,
     },
     {
@@ -149,7 +149,13 @@ const OUTPUT_SECRET_PATTERNS: RiskRule[] = [
     {
         id: "internal_prompt_terms",
         reason: "salida intenta revelar instrucciones internas",
-        pattern: /\b(prompt interno|instrucciones internas|mis reglas del sistema|system prompt|developer instructions)\b/i,
+        pattern: /\b(prompt interno|instrucciones internas|mis reglas del sistema|mis instrucciones|mis funciones|mis politicas|mis reglas|system prompt|developer instructions|agent_identity|mission|tone_and_format|strict_constraints|dashboard_knowledge)\b/i,
+        weight: 1,
+    },
+    {
+        id: "internal_design_discussion",
+        reason: "salida discute funcionamiento o restricciones internas",
+        pattern: /\b(estoy disenado|fui disenado|mi funcionamiento|mi configuracion interna|no deberia)\b.{0,120}\b(instrucciones|funciones|reglas|politicas|configuracion interna|privacidad|seguridad)\b/i,
         weight: 1,
     },
 ]
@@ -158,7 +164,7 @@ const DANGEROUS_TOOL_NAME_PATTERN = /(^|__|\b)(delete_user|drop|truncate|shell|e
 const WRITE_TOOL_NAME_PATTERN = /(^|__|\b)(create|update|delete|cancel|send|post|pay|charge|remove|invite|grant|revoke|write)(_|[a-z]|\b)/i
 
 export const SECURITY_REFUSAL_MESSAGE =
-    "No puedo compartir configuracion interna, datos privados ni ejecutar instrucciones que intenten manipular reglas o herramientas. Puedo ayudarte con una solicitud normal relacionada con el negocio."
+    "No puedo compartir configuracion interna, datos privados ni procesar instrucciones que intenten manipular reglas o herramientas. Puedo ayudarte con una solicitud normal dentro de lo configurado en el dashboard."
 
 export function stripInvisibleCharacters(value: unknown): string {
     return String(value ?? "")

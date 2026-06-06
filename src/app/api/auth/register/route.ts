@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
+import {
+    DEFAULT_STRUCTURED_DASHBOARD_CONFIG,
+    composeStructuredDashboardConfigPrompt,
+} from "@/lib/ai/agent/dashboard-config"
 
 const registerSchema = z.object({
     email: z.string().email("Email inválido"),
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
         await prisma.assistantConfig.create({
             data: {
                 userId: user.id,
-                behaviorPrompt: `Eres un asistente virtual amigable y profesional. Responde de manera clara y concisa. Si no tienes información sobre algo, indica amablemente que no puedes ayudar con eso y sugiere contactar directamente.`,
+                behaviorPrompt: composeStructuredDashboardConfigPrompt(DEFAULT_STRUCTURED_DASHBOARD_CONFIG),
                 infoMode: "SIMPLE",
                 simpleInfo: "",
             },

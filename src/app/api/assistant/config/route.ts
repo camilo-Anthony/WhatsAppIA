@@ -7,7 +7,7 @@ import { z } from "zod"
 const profileSchema = z.object({
     name: z.string().min(1, "El nombre es requerido").optional(),
     behaviorPrompt: z.string().min(10, "El prompt debe tener al menos 10 caracteres"),
-    infoMode: z.enum(["SIMPLE", "ADVANCED"]),
+    infoMode: z.enum(["SIMPLE", "ADVANCED", "RAG"]),
     simpleInfo: z.string().optional(),
 })
 

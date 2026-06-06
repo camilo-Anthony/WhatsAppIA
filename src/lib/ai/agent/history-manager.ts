@@ -1,7 +1,7 @@
 /**
  * History Manager — Gestión del historial de conversación.
  *
- * Port de ZeroClaw `agent/history.rs`:
+ * Gestiona historial y resultados de herramientas:
  *   - trimHistory: mantener máximo N mensajes, preservar system prompt
  *   - truncateToolResult: head(2/3) + tail(1/3) con marker
  *   - emergencyTrim: drop 1/3 de mensajes más viejos atómicamente
@@ -10,7 +10,7 @@
  * @module agent/history-manager
  */
 
-import type { AIMessage } from "../providers/groq"
+import type { AIMessage } from "../providers/llm"
 
 // ==========================================
 // TOKEN ESTIMATION (de context_compressor.rs L82-94)

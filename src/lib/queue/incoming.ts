@@ -5,6 +5,7 @@
 
 import { prisma } from "../db"
 import { dispatch } from "@/lib/queue/dispatcher"
+import { debounceMessage } from "@/lib/queue/debounce"
 import { redactPhone } from "@/lib/utils/redact"
 
 // ==========================================
@@ -59,6 +60,7 @@ export async function handleIncomingMessage(data: IncomingMessageJob) {
         })
     }
 
+    // Guardar mensaje en PostgreSQL INMEDIATAMENTE (nunca se pierde)
     await prisma.message.create({
         data: {
             conversationId: conversation.id,
@@ -69,15 +71,24 @@ export async function handleIncomingMessage(data: IncomingMessageJob) {
         },
     })
 
-    await dispatch("ai-processing", {
-        userId,
-        connectionId,
-        conversationId: conversation.id,
-        clientPhone: senderPhone,
+    // Debounce: acumular mensajes rápidos antes de enviar a IA
+    const conversationId = conversation.id
+    debounceMessage(
+        { connectionId, userId, senderPhone, senderName, messageId, source: data.source, remoteJid },
         messageContent,
-        remoteJid,
-    })
+        async (combined) => {
+            await dispatch("ai-processing", {
+                userId: combined.userId,
+                connectionId: combined.connectionId,
+                conversationId,
+                clientPhone: combined.senderPhone,
+                messageContent: combined.messageContent,
+                remoteJid: combined.remoteJid,
+            })
+            console.log(`[Incoming] Mensaje(s) enviados a IA — conversación: ${conversationId}`)
+        }
+    )
 
-    console.log(`[Incoming] Mensaje guardado y enviado a IA — conversación: ${conversation.id}`)
+    console.log(`[Incoming] Mensaje guardado, esperando debounce — conversación: ${conversationId}`)
     return conversation
 }

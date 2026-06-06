@@ -1,0 +1,8 @@
+fastapi==0.111.0
+uvicorn==0.30.1
+pydantic==2.7.4
+python-multipart==0.0.9
+lightrag-hku>=0.1.1
+pypdf==4.2.0
+docx2txt==0.8
+requests==2.32.3

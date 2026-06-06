@@ -1,7 +1,6 @@
 /**
  * Agent Types — Definiciones de tipos para el pipeline determinístico.
  *
- * Inspirado en ZeroClaw:
  *   - tools/traits.rs → ToolResult, ToolSpec, AgentTool
  *   - agent/agent.rs  → ConversationState, AgentConfig
  *   - agent/loop_detector.rs → LoopDetectionResult
@@ -153,7 +152,7 @@ export interface PromptContext {
     soul: string
     /** Tools disponibles para este usuario */
     tools: ToolSpec[]
-    /** Info del negocio (InfoFields) */
+    /** Conocimiento configurado (InfoFields) */
     businessInfo: Array<{ label: string; value: string }>
     /** Nombre del modelo LLM */
     modelName: string
@@ -218,7 +217,7 @@ export const DEFAULT_COMPRESSION_CONFIG: ContextCompressionConfig = {
     timeoutSecs: 30,
 }
 
-/** Max iteraciones del tool loop (de ZeroClaw default) */
+/** Max iteraciones del tool loop */
 export const MAX_TOOL_ITERATIONS = 5
 
 /** Tamaño de ventana del loop detector */

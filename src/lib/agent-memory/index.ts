@@ -22,12 +22,14 @@ export interface Memory {
 
 interface GetMemoriesOptions {
     userId: string
+    assistantConfigId?: string
     phone?: string
     limit?: number
 }
 
 interface SaveMemoryOptions {
     userId: string
+    assistantConfigId?: string | null
     phone?: string | null
     key: string
     value: string
@@ -46,7 +48,10 @@ interface SaveMemoryOptions {
 export async function getMemories(opts: GetMemoriesOptions): Promise<Memory[]> {
     const { userId, phone, limit = 20 } = opts
 
-    const where: Record<string, unknown> = { userId }
+    const where: Record<string, unknown> = {
+        userId,
+        assistantConfigId: opts.assistantConfigId ?? null,
+    }
 
     if (phone) {
         // Memorias del cliente + memorias globales
@@ -78,7 +83,7 @@ export async function getMemories(opts: GetMemoriesOptions): Promise<Memory[]> {
  * Guarda o actualiza una memoria. Resetea score a 1.0 al actualizar.
  */
 export async function saveMemory(opts: SaveMemoryOptions): Promise<void> {
-    const { userId, phone = null, key, value, category = "general" } = opts
+    const { userId, assistantConfigId = null, phone = null, key, value, category = "general" } = opts
     const decision = classifyMemoryForStorage({ key, value, category })
 
     if (!decision.allowed) {
@@ -88,7 +93,7 @@ export async function saveMemory(opts: SaveMemoryOptions): Promise<void> {
 
     // Prisma compound unique doesn't support null in where, so manual check
     const existing = await prisma.agentMemory.findFirst({
-        where: { userId, phone, key: decision.sanitizedKey },
+        where: { userId, assistantConfigId, phone, key: decision.sanitizedKey },
     })
 
     if (existing) {
@@ -105,6 +110,7 @@ export async function saveMemory(opts: SaveMemoryOptions): Promise<void> {
         await prisma.agentMemory.create({
             data: {
                 userId,
+                assistantConfigId,
                 phone,
                 key: decision.sanitizedKey,
                 value: decision.sanitizedValue,
@@ -121,10 +127,11 @@ export async function saveMemory(opts: SaveMemoryOptions): Promise<void> {
 export async function deleteMemory(
     userId: string,
     key: string,
-    phone?: string | null
+    phone?: string | null,
+    assistantConfigId?: string | null
 ): Promise<void> {
     await prisma.agentMemory.deleteMany({
-        where: { userId, phone: phone ?? null, key },
+        where: { userId, assistantConfigId: assistantConfigId ?? null, phone: phone ?? null, key },
     })
 }
 
@@ -132,16 +139,15 @@ export async function deleteMemory(
  * Degrada el score de todas las memorias antiguas (llamar periódicamente).
  * Memorias con score < 0.1 se eliminan automáticamente.
  */
-export async function decayMemories(userId: string): Promise<void> {
+export async function decayMemories(userId: string, assistantConfigId?: string | null): Promise<void> {
     // Reducir score en 10%
-    await prisma.$executeRaw`
-        UPDATE agent_memories
-        SET score = score * 0.9
-        WHERE "userId" = ${userId}
-    `
+    await prisma.agentMemory.updateMany({
+        where: { userId, assistantConfigId: assistantConfigId ?? null },
+        data: { score: { multiply: 0.9 } },
+    })
 
     // Eliminar memorias con score muy bajo
     await prisma.agentMemory.deleteMany({
-        where: { userId, score: { lt: 0.1 } },
+        where: { userId, assistantConfigId: assistantConfigId ?? null, score: { lt: 0.1 } },
     })
 }
