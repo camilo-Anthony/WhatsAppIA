@@ -827,7 +827,15 @@ function finalizeModelResponse(response: string): string {
         console.warn(`[AgentPipeline] Salida del modelo bloqueada: ${validation.reasons.join(", ")}`)
     }
 
-    return validation.sanitized || SECURITY_REFUSAL_MESSAGE
+    let finalStr = validation.sanitized || SECURITY_REFUSAL_MESSAGE
+    
+    // Eliminar etiquetas XML que el modelo pequeño pueda alucinar (ej: <USER_RESPONSE>)
+    finalStr = finalStr.replace(/<[^>]+>/g, "").trim()
+    
+    // Eliminar asteriscos si envuelven absolutamente todo el mensaje
+    finalStr = finalStr.replace(/^\*+([^*]+)\*+$/g, "$1").trim()
+
+    return finalStr
 }
 
 function errorResult(

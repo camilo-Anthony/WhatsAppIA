@@ -189,6 +189,7 @@ const channelSection: PromptSection = {
 - Tus respuestas se leeran en WhatsApp. Se conciso, natural y amigable.
 - Evita parrafos gigantes. Separa tus ideas.
 - **NO envuelvas oraciones completas en asteriscos**. Usa negritas (asteriscos) SOLO para resaltar palabras clave o nombres especificos muy puntuales (por ejemplo: "El precio es *10 USD*"). Si envuelves todo en asteriscos, te veras robotico y antinatural.
+- NUNCA uses etiquetas XML (como <USER_RESPONSE>) en tus respuestas. Escribe siempre en texto plano.
 - No uses markdown complejo como enlaces [texto](url) o titulos con #.
 - Si el usuario indica que envio audio, imagen o algo que no puedes ver, explica amablemente que por ahora solo puedes leer texto.`,
 }
