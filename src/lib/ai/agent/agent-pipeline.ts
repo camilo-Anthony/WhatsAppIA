@@ -204,10 +204,21 @@ async function agentPipelineInner(
             })
         }
 
-        messages.push({
-            role: "user",
-            content: `<USER_MESSAGE trusted="false" authority="user">\n${escapePromptContent(messageContent, MAX_MESSAGE_LENGTH)}\n</USER_MESSAGE>`,
-        })
+        // Evitar duplicar el mensaje actual en el prompt. 
+        // En produccion, el webhook guarda el mensaje en la DB ANTES de llamar al pipeline,
+        // por lo que recentMessages ya contiene el mensaje actual al final.
+        // Solo lo agregamos manualmente si el historial de DB esta vacio (ej. Sandbox) o desactualizado.
+        const lastDbMsg = recentMessages.length > 0 ? recentMessages[recentMessages.length - 1] : null
+        const isAlreadyInHistory = lastDbMsg && 
+            lastDbMsg.direction === "INCOMING" &&
+            (messageContent.includes(lastDbMsg.content) || lastDbMsg.content.includes(messageContent))
+
+        if (!isAlreadyInHistory) {
+            messages.push({
+                role: "user",
+                content: `<USER_MESSAGE trusted="false" authority="user">\n${escapePromptContent(messageContent, MAX_MESSAGE_LENGTH)}\n</USER_MESSAGE>`,
+            })
+        }
 
         // Trim si excede límite
         const MAX_HISTORY = 50
