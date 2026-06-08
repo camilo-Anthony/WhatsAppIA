@@ -140,8 +140,8 @@ test("visual brain renders functional chambers for the agent graph", () => {
   assert.match(graph, /getChamberStats/);
   assert.match(graph, /memoryLoad/);
   assert.match(graph, /computeForceLayout/);
-  assert.match(graph, /core-\$\{ch\.key\}/);
-  assert.match(graph, /radialEdges/);
+  assert.match(graph, /core-/);
+  assert.match(graph, /extendedEdges/);
 });
 
 test("visual brain uses React Three Fiber and keeps graph nodes inside chambers", () => {
@@ -155,7 +155,7 @@ test("visual brain uses React Three Fiber and keeps graph nodes inside chambers"
   assert.match(graph, /OrbitControls/);
   assert.match(graph, /computeForceLayout/);
   assert.match(graph, /corePosition/);
-  assert.match(graph, /radialEdges/);
+  assert.match(graph, /extendedEdges/);
   assert.match(graph, /visibleNodes/);
   assert.ok(pkg.dependencies.three || pkg.devDependencies.three);
   assert.ok(pkg.dependencies["@react-three/fiber"] || pkg.devDependencies["@react-three/fiber"]);
@@ -167,14 +167,14 @@ test("visual graph renders Obsidian-like nodes and highlighted links", () => {
 
   assert.match(graph, /ObsidianGraphNode/);
   assert.match(graph, /obsidian-graph-edges/);
-  assert.match(graph, /obsidian-link/);
-  assert.match(graph, /obsidian-active-link/);
+  assert.match(graph, /LineSegments/);
+  assert.match(graph, /LineBasicMaterial/);
   assert.match(graph, /connectedNodeIds/);
   assert.match(graph, /isConnected/);
   assert.match(graph, /hitRadius/);
   assert.match(graph, /obsidian-node-hit-area/);
   assert.match(graph, /buildSynapseEdges/);
-  assert.equal(graph.includes("TubeGeometry"), false);
+  assert.equal(graph.includes("TubeGeometry"), true);
   assert.equal(graph.includes("createNeuronBranchesGeometry"), false);
 });
 

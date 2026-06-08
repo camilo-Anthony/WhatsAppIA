@@ -3,7 +3,7 @@
 
 import { use, useCallback, useEffect, useState, useRef, useMemo } from "react"
 import Link from "next/link"
-import { Shield, X, BookOpen, Calendar, Hammer, Send, Trash, Smartphone, Play, Loader2, ExternalLink, FileText, Settings } from "lucide-react"
+import { Shield, X, BookOpen, Calendar, Hammer, Send, Trash, Smartphone, Play, Loader2, ExternalLink, FileText, Settings, MessageSquare, Brain, ChevronLeft, Save, Check } from "lucide-react"
 import {
     ReactFlow,
     Background,
@@ -278,86 +278,7 @@ const nodeTypes = {
     obsidianNode: ObsidianNode,
 }
 
-const DEMO_GRAPH_DATA: GraphData = (() => {
-    const nodes: GraphNode[] = [
-        // Identidad (Core personality & goals)
-        { id: "id-ventas", labels: ["IDENTIDAD"], properties: { displayName: "Identidad: Ventas B2B", description: "Perfil principal del asistente: Consultor comercial." } },
-        { id: "id-nombre", labels: ["IDENTIDAD"], properties: { displayName: "Nombre: Anthony", description: "Nombre de pila configurado para el asistente." } },
-        { id: "id-rol", labels: ["IDENTIDAD"], properties: { displayName: "Rol: Asesor de Ventas", description: "Asistente virtual especializado en ventas de software y SaaS." } },
-        { id: "id-tono", labels: ["IDENTIDAD"], properties: { displayName: "Tono: Consultivo y Amigable", description: "Responder siempre de manera clara, proactiva, estructurada y educada." } },
-        { id: "id-mision", labels: ["IDENTIDAD"], properties: { displayName: "Misión: Generar Clientes", description: "Identificar necesidades del cliente, resolver dudas y guiar hacia agendar una demo." } },
-        { id: "id-limite", labels: ["IDENTIDAD"], properties: { displayName: "Restricción: Precios Fijos", description: "No ofrecer descuentos, ofertas especiales ni rebajas sin la autorización directa de un supervisor." } },
-        { id: "id-saludo", labels: ["IDENTIDAD"], properties: { displayName: "Saludo: Formal y Cálido", description: "Comenzar siempre con un saludo acorde al momento del día y preguntar cómo se le puede ayudar." } },
-        { id: "id-despedida", labels: ["IDENTIDAD"], properties: { displayName: "Cierre: Sugerir Demo (CTA)", description: "Terminar sugiriendo al cliente agendar una breve llamada de demostración." } },
 
-        // Herramientas (Integrations)
-        { id: "tool-cal", labels: ["HERRAMIENTA"], properties: { displayName: "Google Calendar", description: "Lectura/escritura de eventos." } },
-        { id: "tool-sheets", labels: ["HERRAMIENTA"], properties: { displayName: "Google Sheets", description: "CRM ligero." } },
-        { id: "tool-notion", labels: ["HERRAMIENTA"], properties: { displayName: "Notion", description: "Base de conocimiento interna." } },
-        { id: "tool-slack", labels: ["CAJA_HERRAMIENTAS"], properties: { displayName: "Slack Alerts", description: "Avisar a humanos." } },
-        { id: "tool-stripe", labels: ["HERRAMIENTA"], properties: { displayName: "Stripe", description: "Generar links de pago." } },
-        { id: "tool-hubspot", labels: ["CAJA_HERRAMIENTAS"], properties: { displayName: "HubSpot", description: "Sincronizar leads." } },
-        { id: "tool-zoom", labels: ["HERRAMIENTA"], properties: { displayName: "Zoom", description: "Crear links de reunión." } },
-    ]
-
-    // Conocimiento (RAG Documents & concepts) - 100 nodes
-    for (let i = 1; i <= 100; i++) {
-        nodes.push({
-            id: `doc-${i}`,
-            labels: i % 3 === 0 ? ["RAG"] : ["DOCUMENTO"],
-            properties: { displayName: `Manual Técnico v${i}.0`, description: `Documentación indexada de la página ${i * 10}.` }
-        })
-    }
-
-    // Memoria viva (Clients, conversations, facts) - 250 nodes
-    for (let i = 1; i <= 250; i++) {
-        const types = ["CLIENTE", "PERSONA", "ORGANIZA", "UBICACI", "PREFERENCIA", "DATO"]
-        nodes.push({
-            id: `mem-${i}`,
-            labels: [types[i % types.length]],
-            properties: { displayName: `Entidad de Memoria #${i}`, description: `Dato extraído automáticamente del chat.` }
-        })
-    }
-
-    const edges: GraphEdge[] = [
-        // Core Identity connections (branching from id-ventas)
-        { source: "id-ventas", target: "id-nombre", type: "TIENE_NOMBRE" },
-        { source: "id-ventas", target: "id-rol", type: "TIENE_ROL" },
-        { source: "id-ventas", target: "id-tono", type: "TIENE_TONO" },
-        { source: "id-ventas", target: "id-mision", type: "TIENE_MISIÓN" },
-        { source: "id-ventas", target: "id-limite", type: "RESTRICCIÓN" },
-        { source: "id-ventas", target: "id-saludo", type: "TIENE_SALUDO" },
-        { source: "id-ventas", target: "id-despedida", type: "TIENE_DESPEDIDA" },
-
-        // Inter-layer connections
-        { source: "id-mision", target: "tool-cal", type: "REQUIERE" },
-        { source: "id-mision", target: "tool-zoom", type: "USA" },
-        { source: "id-mision", target: "tool-stripe", type: "USA" },
-        { source: "tool-cal", target: "mem-1", type: "AGENDÓ" },
-        { source: "tool-sheets", target: "mem-2", type: "REGISTRA" },
-        { source: "tool-hubspot", target: "mem-3", type: "SINCRONIZA" },
-    ]
-
-    // Randomly connect documents to identity
-    for (let i = 1; i <= 5; i++) {
-        edges.push({ source: "id-ventas", target: `doc-${i}`, type: "CONOCE" })
-    }
-
-    // Randomly connect memory to documents (client read manual X)
-    for (let i = 1; i <= 80; i++) {
-        edges.push({ source: `mem-${i}`, target: `doc-${(i % 100) + 1}`, type: "PREGUNTÓ_SOBRE" })
-    }
-
-    // Randomly interconnect memory nodes
-    for (let i = 1; i <= 200; i++) {
-        edges.push({ source: `mem-${i}`, target: `mem-${i + 1}`, type: "RELACIONADO_CON" })
-        if (i % 5 === 0) {
-            edges.push({ source: `mem-${i}`, target: `mem-${Math.max(1, i - 20)}`, type: "MISMOS_GUSTOS" })
-        }
-    }
-
-    return { nodes, edges }
-})()
 
 const translatePropKey = (key: string): string => {
     switch (key) {
@@ -414,6 +335,8 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
         DEFAULT_STRUCTURED_DASHBOARD_CONFIG
     )
     const [loading, setLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
+    const [showSaveToast, setShowSaveToast] = useState(false)
 
     // Studio Canvas & Drawer States
     const [activeDrawer, setActiveDrawer] = useState<"agent" | "knowledge" | "tools" | null>(null)
@@ -433,6 +356,7 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
     const [chatInput, setChatInput] = useState("")
     const [sending, setSending] = useState(false)
     const chatEndRef = useRef<HTMLDivElement>(null)
+    const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
 
     // React Flow States
     const [nodes, setNodes] = useNodesState<Node>([])
@@ -586,13 +510,7 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
         }
     }, [canvasView, fetchGraph])
 
-    useEffect(() => {
-        // Inject demo data forcefully for testing visualization
-        if (canvasView === "memory") {
-            const timer = setTimeout(() => setGraphData(DEMO_GRAPH_DATA), 500)
-            return () => clearTimeout(timer)
-        }
-    }, [canvasView, DEMO_GRAPH_DATA])
+
 
     // File upload handler
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -648,6 +566,7 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
     // Save Profile
     const handleSave = useCallback(async () => {
         if (!profile) return
+        setIsSaving(true)
 
         try {
             await fetch(`/api/assistant/config/${resolvedParams.id}`, {
@@ -660,15 +579,14 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
                     simpleInfo: profile.simpleInfo,
                 }),
             })
+            setShowSaveToast(true)
+            setTimeout(() => setShowSaveToast(false), 2500)
         } catch (error) {
             console.error("Error saving:", error)
+        } finally {
+            setIsSaving(false)
         }
     }, [behaviorConfig, profile, resolvedParams.id])
-
-    useEffect(() => {
-        window.addEventListener("save-assistant", handleSave)
-        return () => window.removeEventListener("save-assistant", handleSave)
-    }, [handleSave])
 
     // Update Nodes when config or active states change
     useEffect(() => {
@@ -956,6 +874,34 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
         }
     }
 
+    // Clear Sandbox Memory and History
+    const handleClearSandbox = async () => {
+        if (!window.confirm("¿Estás seguro de que deseas borrar toda la memoria y el historial del Sandbox de este agente? Esta acción no se puede deshacer.")) {
+            return
+        }
+
+        setSending(true)
+        try {
+            const res = await fetch(`/api/assistant/config/${resolvedParams.id}/sandbox`, {
+                method: "DELETE",
+            })
+            if (res.ok) {
+                setMessages([])
+                // Recargar el grafo de memoria 3D para reflejar que se borró el sandbox
+                await fetchGraph()
+                setShowSaveToast(true)
+                setTimeout(() => setShowSaveToast(false), 2000)
+            } else {
+                alert("Error al intentar limpiar el sandbox.")
+            }
+        } catch (error) {
+            console.error("Error clearing sandbox:", error)
+            alert("Ocurrió un error inesperado al intentar limpiar el sandbox.")
+        } finally {
+            setSending(false)
+        }
+    }
+
     if (loading) {
         return (
             <div className={styles.section}>
@@ -969,37 +915,27 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
     }
 
     return (
-        <div className={styles.splitScreenContainer}>
+        <>
+            {/* UNIFIED TOP BAR: Back, Toggles, Save */}
+            <div className={styles.topBar}>
+                <Link href="/dashboard/assistant" className={styles.topBarBack} title="Volver a la lista">
+                    <ChevronLeft size={16} />
+                    <span>Volver</span>
+                </Link>
 
-            {/* LEFT COLUMN: INTERACTIVE CANVAS */}
-            <div className={styles.canvasColumn} style={{ display: "flex", flexDirection: "column" }}>
-                {/* View Toggles: Studio Config vs. Memory Map */}
-                <div style={{
-                    display: "flex",
-                    gap: "8px",
-                    background: "var(--color-bg-secondary)",
-                    borderBottom: "1px solid var(--color-border)",
-                    padding: "12px 24px",
-                    alignItems: "center"
-                }}>
+                <div className={styles.topBarTabs}>
                     <button
                         type="button"
                         onClick={() => setCanvasView("studio")}
-                        title="Estudio"
+                        className={styles.topBarTabButton}
                         style={{
-                            padding: "8px",
-                            borderRadius: "6px",
                             background: canvasView === "studio" ? "var(--color-primary)" : "transparent",
-                            color: canvasView === "studio" ? "#000" : "var(--color-text-muted)",
-                            border: canvasView === "studio" ? "none" : "1px solid var(--color-border)",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center"
+                            color: canvasView === "studio" ? "#000" : "var(--color-text-muted)"
                         }}
                     >
-                        <Settings size={18} />
+                        <Settings size={16} />
+                        <span className={styles.tabTextFull}>Entrenamiento del Agente</span>
+                        <span className={styles.tabTextShort}>Entrenamiento</span>
                     </button>
                     <button
                         type="button"
@@ -1007,25 +943,36 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
                             setCanvasView("memory")
                             fetchGraph()
                         }}
-                        title="Cerebro"
+                        className={styles.topBarTabButton}
                         style={{
-                            padding: "8px",
-                            borderRadius: "6px",
                             background: canvasView === "memory" ? "var(--color-primary)" : "transparent",
-                            color: canvasView === "memory" ? "#000" : "var(--color-text-muted)",
-                            border: canvasView === "memory" ? "none" : "1px solid var(--color-border)",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center"
+                            color: canvasView === "memory" ? "#000" : "var(--color-text-muted)"
                         }}
                     >
-                        <BookOpen size={18} />
+                        <Brain size={16} />
+                        <span className={styles.tabTextFull}>Cerebro 3D (Memoria)</span>
+                        <span className={styles.tabTextShort}>Cerebro</span>
                     </button>
                 </div>
 
-                <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+                <div style={{ flex: 1 }} />
+
+                <button
+                    className={`btn btn-primary btn-sm ${styles.topBarSave}`}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                >
+                    {isSaving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                    <span>Guardar</span>
+                </button>
+            </div>
+
+            <div className={styles.splitScreenContainer}>
+
+                {/* LEFT COLUMN: INTERACTIVE CANVAS */}
+                <div className={styles.canvasColumn} style={{ display: "flex", flexDirection: "column" }}>
+
+                    <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
                     {canvasView === "studio" ? (
                         <>
                             <ReactFlow
@@ -1637,10 +1584,15 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
 
             {/* RIGHT COLUMN: PLAYGROUND CHAT */}
             {canvasView === "studio" && (
-                <div className={styles.playgroundColumn}>
+                <div className={`${styles.playgroundColumn} ${isMobileChatOpen ? styles.playgroundColumnOpen : ""}`}>
                     <div className={styles.playgroundHeader}>
                         <h3 className={styles.playgroundTitle}>Sandbox del Agente</h3>
-                        <button className="btn btn-icon btn-sm" onClick={() => setMessages([])} title="Limpiar Chat">
+                        <button 
+                            className="btn btn-icon btn-sm" 
+                            onClick={handleClearSandbox} 
+                            disabled={sending} 
+                            title="Borrar memoria e historial de Sandbox"
+                        >
                             <Trash size={16} />
                         </button>
                     </div>
@@ -1756,7 +1708,27 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
                     </div>
                 </div>
             )}
-        </div>
+
+            {/* MOBILE FLOATING ACTION BUTTON */}
+            {canvasView === "studio" && (
+                <button 
+                    className={`${styles.mobileChatFab} ${isMobileChatOpen ? styles.mobileChatFabActive : ""}`}
+                    onClick={() => setIsMobileChatOpen(!isMobileChatOpen)}
+                    title="Abrir Sandbox"
+                >
+                    {isMobileChatOpen ? <X size={24} /> : <MessageSquare size={24} />}
+                </button>
+            )}
+
+            {/* Save Toast */}
+            {showSaveToast && (
+                <div className={styles.saveToast}>
+                    <Check size={16} />
+                    Cambios guardados
+                </div>
+            )}
+            </div>
+        </>
     )
 }
 

@@ -91,7 +91,7 @@ export async function GET(
         const edges: VisualGraphEdge[] = []
 
         // Nodo central del Grafo: IDENTIDAD
-        const identityNodeId = `identity_${profileId}`
+        const identityNodeId = `core-identity_${profileId}`
         nodes.push({
             id: identityNodeId,
             labels: ["IDENTIDAD"],
@@ -192,122 +192,147 @@ export async function GET(
         }
 
         // --- SECCIÓN: CONOCIMIENTO ---
-        // Nodo raíz de conocimiento
-        const knowledgeRootId = `root_knowledge_${profileId}`
+        // Nodo raíz de conocimiento (ahora incondicional)
+        const knowledgeRootId = `core-knowledge_${profileId}`
         const hasConfiguredSimpleKnowledge = Boolean(existingProfile.simpleInfo?.trim())
-        if (hasConfiguredSimpleKnowledge || documents.length > 0 || ragGraph.nodes.length > 0) {
+        nodes.push({
+            id: knowledgeRootId,
+            labels: ["BASE_CONOCIMIENTO"],
+            properties: {
+                displayName: "Base de Conocimiento",
+                description: hasConfiguredSimpleKnowledge
+                    ? "Informacion configurada en el dashboard"
+                    : (documents.length > 0 || ragGraph.nodes.length > 0 ? "Documentos indexados (RAG)" : "Sin documentos ni información configurada")
+            }
+        })
+        edges.push({
+            id: `edge_identity_knowledge`,
+            source: identityNodeId,
+            target: knowledgeRootId,
+            type: "TIENE_CONOCIMIENTO",
+            label: "TIENE_CONOCIMIENTO",
+            properties: { weight: "1.0" }
+        })
+
+        if (hasConfiguredSimpleKnowledge) {
+            const simpleKnowledgeNodeId = `simple_knowledge_${profileId}`
             nodes.push({
-                id: knowledgeRootId,
-                labels: ["BASE_CONOCIMIENTO"],
+                id: simpleKnowledgeNodeId,
+                labels: ["CONOCIMIENTO"],
                 properties: {
-                    displayName: "Base de Conocimiento",
-                    description: hasConfiguredSimpleKnowledge
-                        ? "Informacion configurada en el dashboard"
-                        : "Documentos indexados (RAG)"
+                    displayName: "Conocimiento configurado",
+                    description: graphText(existingProfile.simpleInfo),
+                    source: "dashboard",
+                    status: "Configurado"
                 }
             })
             edges.push({
-                id: `edge_identity_knowledge`,
-                source: identityNodeId,
-                target: knowledgeRootId,
-                type: "TIENE_CONOCIMIENTO",
-                label: "TIENE_CONOCIMIENTO",
+                id: `edge_knowledge_simple_${profileId}`,
+                source: knowledgeRootId,
+                target: simpleKnowledgeNodeId,
+                type: "CONOCIMIENTO_CONFIGURADO",
+                label: "CONOCIMIENTO_CONFIGURADO",
                 properties: { weight: "1.0" }
             })
-
-            if (hasConfiguredSimpleKnowledge) {
-                const simpleKnowledgeNodeId = `simple_knowledge_${profileId}`
-                nodes.push({
-                    id: simpleKnowledgeNodeId,
-                    labels: ["CONOCIMIENTO"],
-                    properties: {
-                        displayName: "Conocimiento configurado",
-                        description: graphText(existingProfile.simpleInfo),
-                        source: "dashboard",
-                        status: "Configurado"
-                    }
-                })
-                edges.push({
-                    id: `edge_knowledge_simple_${profileId}`,
-                    source: knowledgeRootId,
-                    target: simpleKnowledgeNodeId,
-                    type: "CONOCIMIENTO_CONFIGURADO",
-                    label: "CONOCIMIENTO_CONFIGURADO",
-                    properties: { weight: "1.0" }
-                })
-            }
-
-            // Agregar documentos
-            for (const doc of documents) {
-                const docNodeId = `doc_${doc.id}`
-                nodes.push({
-                    id: docNodeId,
-                    labels: ["CONOCIMIENTO"],
-                    properties: {
-                        displayName: graphText(doc.filename, 120),
-                        description: graphText(`Archivo ${doc.fileType.toUpperCase()}`),
-                        fileType: graphText(doc.fileType, 20),
-                        status: doc.processed ? "Indexado" : "Procesando"
-                    }
-                })
-                edges.push({
-                    id: `edge_knowledge_${doc.id}`,
-                    source: knowledgeRootId,
-                    target: docNodeId,
-                    type: "DOCUMENTO",
-                    label: "DOCUMENTO",
-                    properties: { weight: "1.0" }
-                })
-            }
-
-            appendLightRAGGraph(ragGraph, nodes, edges, knowledgeRootId)
         }
 
-        // --- SECCIÓN: HERRAMIENTAS ---
-        // Nodo raíz de herramientas
-        const toolsRootId = `root_tools_${profileId}`
-        if (tools.length > 0) {
+        // Agregar documentos
+        for (const doc of documents) {
+            const docNodeId = `doc_${doc.id}`
             nodes.push({
-                id: toolsRootId,
-                labels: ["CAJA_HERRAMIENTAS"],
+                id: docNodeId,
+                labels: ["CONOCIMIENTO"],
                 properties: {
-                    displayName: "Herramientas Conectadas",
-                    description: "Integraciones disponibles"
+                    displayName: graphText(doc.filename, 120),
+                    description: graphText(`Archivo ${doc.fileType.toUpperCase()}`),
+                    fileType: graphText(doc.fileType, 20),
+                    status: doc.processed ? "Indexado" : "Procesando"
                 }
             })
             edges.push({
-                id: `edge_identity_tools`,
-                source: identityNodeId,
-                target: toolsRootId,
-                type: "USA_HERRAMIENTAS",
-                label: "USA_HERRAMIENTAS",
+                id: `edge_knowledge_${doc.id}`,
+                source: knowledgeRootId,
+                target: docNodeId,
+                type: "DOCUMENTO",
+                label: "DOCUMENTO",
                 properties: { weight: "1.0" }
             })
+        }
 
-            // Agregar cuentas de herramientas
-            for (const tool of tools) {
-                const toolNodeId = `tool_${tool.id}`
-                nodes.push({
-                    id: toolNodeId,
-                    labels: ["HERRAMIENTA"],
-                    properties: {
-                        displayName: graphText(tool.label, 100),
-                        description: graphText(`Integración: ${tool.integration.provider}`),
-                        provider: graphText(tool.integration.provider, 60)
-                    }
-                })
-                edges.push({
-                    id: `edge_tools_${tool.id}`,
-                    source: toolsRootId,
-                    target: toolNodeId,
-                    type: "HERRAMIENTA_ACTIVA",
-                    label: "HERRAMIENTA_ACTIVA",
-                    properties: { weight: "1.0" }
-                })
+        appendLightRAGGraph(ragGraph, nodes, edges, knowledgeRootId)
+
+        // --- SECCIÓN: HERRAMIENTAS ---
+        // Nodo raíz de herramientas (ahora incondicional)
+        const toolsRootId = `core-tools_${profileId}`
+        nodes.push({
+            id: toolsRootId,
+            labels: ["CAJA_HERRAMIENTAS"],
+            properties: {
+                displayName: "Herramientas Conectadas",
+                description: tools.length > 0 ? "Integraciones disponibles" : "Sin herramientas conectadas"
             }
+        })
+        edges.push({
+            id: `edge_identity_tools`,
+            source: identityNodeId,
+            target: toolsRootId,
+            type: "USA_HERRAMIENTAS",
+            label: "USA_HERRAMIENTAS",
+            properties: { weight: "1.0" }
+        })
+
+        // Agregar cuentas de herramientas
+        for (const tool of tools) {
+            const toolNodeId = `tool_${tool.id}`
+            nodes.push({
+                id: toolNodeId,
+                labels: ["HERRAMIENTA"],
+                properties: {
+                    displayName: graphText(tool.label, 100),
+                    description: graphText(`Integración: ${tool.integration.provider}`),
+                    provider: graphText(tool.integration.provider, 60)
+                }
+            })
+            edges.push({
+                id: `edge_tools_${tool.id}`,
+                source: toolsRootId,
+                target: toolNodeId,
+                type: "HERRAMIENTA_ACTIVA",
+                label: "HERRAMIENTA_ACTIVA",
+                properties: { weight: "1.0" }
+            })
         }
 
         // --- SECCIÓN: MEMORIA ---
+        // Nodo raíz de memoria (ahora incondicional)
+        const memoryRootId = `core-memory_${profileId}`
+        nodes.push({
+            id: memoryRootId,
+            labels: ["MEMORIA_BASE"],
+            properties: {
+                displayName: "Base de Memoria",
+                description: memories.length > 0 ? "Centro de recuerdos por chat" : "Sin recuerdos memorizados"
+            }
+        })
+        edges.push({
+            id: `edge_identity_memory_${profileId}`,
+            source: identityNodeId,
+            target: memoryRootId,
+            type: "TIENE_MEMORIA",
+            label: "TIENE_MEMORIA",
+            properties: { weight: "1.0" }
+        })
+
+        // Conexión cognitiva entre Conocimiento y Memoria
+        edges.push({
+            id: `edge_knowledge_memory_${profileId}`,
+            source: knowledgeRootId,
+            target: memoryRootId,
+            type: "CONECTA_CON",
+            label: "CONECTA_CON",
+            properties: { weight: "1.0" }
+        })
+
         // Agrupar memorias por teléfono (cliente)
         const clientGroups = new Map<string, typeof memories>()
         for (const mem of memories) {
@@ -332,7 +357,7 @@ export async function GET(
         }
 
         for (const [phone, mems] of clientGroups) {
-            let parentNodeId = identityNodeId
+            let parentNodeId = memoryRootId
             let clientLabel = existingProfile.name
 
             if (phone !== "global") {
@@ -340,9 +365,7 @@ export async function GET(
                 const clientNodeId = `client_${phone}`
                 parentNodeId = clientNodeId
                 
-                // Buscar nombre del cliente en sus memorias
-                const nameMem = mems.find(m => m.key.toLowerCase() === "nombre")
-                clientLabel = nameMem ? graphText(nameMem.value, 80) : graphText(phone, 40)
+                clientLabel = graphText(phone, 40)
 
                 nodes.push({
                     id: clientNodeId,
@@ -354,10 +377,10 @@ export async function GET(
                     }
                 })
 
-                // Conectar Identidad -> Cliente
+                // Conectar Memoria Base -> Cliente
                 edges.push({
-                    id: `edge_identity_${phone}`,
-                    source: identityNodeId,
+                    id: `edge_memory_${phone}`,
+                    source: memoryRootId,
                     target: clientNodeId,
                     type: "INTERACTUA_CON",
                     label: "INTERACTÚA_CON",
@@ -370,8 +393,6 @@ export async function GET(
 
             // Nodo por cada hecho memorizado
             for (const mem of mems) {
-                // No crear nodo separado para "nombre" ya que es el label del cliente
-                if (phone !== "global" && mem.key.toLowerCase() === "nombre") continue
 
                 const factNodeId = `fact_${mem.id}`
                 // Convertir cualquier categoría vieja a "MEMORIA" si no está mapeada
