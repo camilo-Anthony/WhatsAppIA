@@ -276,6 +276,14 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .hero {
+        padding: calc(var(--header-height) + var(--space-10)) 0 var(--space-10);
+    }
+
+    .features, .howItWorks {
+        padding: var(--space-10) 0;
+    }
+
     .heroTitle {
         font-size: var(--font-size-3xl);
     }
@@ -286,7 +294,11 @@
 
     .heroCTA {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
+        width: 100%;
+        max-width: 320px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .stepsGrid {
@@ -296,9 +308,26 @@
     .stepDivider {
         width: 2px;
         height: 40px;
+        margin: var(--space-2) auto;
     }
 
-    .navActions .btn-ghost {
+    .navLogoText {
         display: none;
+    }
+
+    .navActions .btn {
+        padding: var(--space-2) var(--space-3);
+        font-size: var(--font-size-xs);
+    }
+
+    .footerContent {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-6);
+    }
+
+    .footerLinks {
+        flex-direction: column;
+        gap: var(--space-4);
     }
 }

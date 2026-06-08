@@ -30,6 +30,12 @@
     gap: var(--space-6);
 }
 
+.topActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-6);
+}
+
 /* Breadcrumb & Top Actions */
 .breadcrumbBar {
     display: flex;
@@ -357,8 +363,20 @@
         justify-content: space-between;
     }
 
+    .topActions {
+        justify-content: stretch;
+    }
+
+    .topActions button {
+        width: 100%;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
     .templateGrid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
     }
 
     .formGrid,
@@ -767,7 +785,8 @@
 
 .splitScreenContainer {
     display: flex;
-    height: calc(100vh - 190px);
+    height: calc(100vh - 190px); /* Fallback para navegadores antiguos */
+    height: calc(100dvh - 190px); /* Ajuste dinámico para barras de direcciones en móviles */
     min-height: 580px;
     margin-top: var(--space-2);
     border: 1px solid var(--color-border);
@@ -801,6 +820,7 @@
     top: 0;
     left: 0;
     width: 360px;
+    max-width: 100%;
     height: 100%;
     background: var(--color-bg-secondary);
     border-right: 1px solid var(--color-border);
@@ -831,6 +851,122 @@
 @keyframes slideInLeft {
     from { transform: translateX(-100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
+}
+
+/* Drawer Accent Colors */
+.drawerAccentAgent { border-top: 4px solid var(--color-primary); }
+.drawerAccentKnowledge { border-top: 4px solid var(--color-warning); }
+.drawerAccentTools { border-top: 4px solid var(--color-info); }
+
+/* Drawer Tabs */
+.drawerTabs {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-2);
+}
+.drawerTab {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+}
+.drawerTab:hover { color: var(--color-text-primary); background: var(--color-bg-tertiary); }
+.drawerTabActive { color: var(--color-primary); background: rgba(var(--color-primary-rgb), 0.1); }
+
+/* Knowledge & Tools Drawer Components */
+.ragModeSelector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+.ragSelect {
+    width: 100%;
+    padding: var(--space-3);
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    outline: none;
+}
+.ragSelect:focus { border-color: var(--color-primary); }
+.sectionTitle {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
+}
+.fieldHint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+.dropzone {
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(0,0,0,0.1);
+    transition: border-color 0.2s;
+}
+.dropzone:hover { border-color: var(--color-warning); }
+.dropzoneText { font-size: var(--font-size-sm); font-weight: 600; margin-top: var(--space-2); }
+.dropzoneHint { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.documentsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+}
+.documentItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+.documentInfo { display: flex; flex-direction: column; overflow: hidden; }
+.documentName { font-size: var(--font-size-sm); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.documentMeta { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.documentActions { display: flex; align-items: center; gap: var(--space-3); }
+.badgeProcessed { font-size: 10px; padding: 2px 6px; background: rgba(34, 197, 94, 0.1); color: var(--color-success); border-radius: 4px; }
+.badgeFailed { font-size: 10px; padding: 2px 6px; background: rgba(239, 68, 68, 0.1); color: var(--color-error); border-radius: 4px; }
+.badgeProcessing { font-size: 10px; padding: 2px 6px; background: rgba(245, 158, 11, 0.1); color: var(--color-warning); border-radius: 4px; }
+.disconnectedToolsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+.disconnectedToolItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    transition: all 0.2s;
+}
+.disconnectedToolItem:hover {
+    border-color: var(--color-border-hover);
+    color: var(--color-text-primary);
 }
 
 /* Custom Nodes style */
@@ -1236,23 +1372,7 @@
     stroke-width: 3px !important;
 }
 
-@media (max-width: 1024px) {
-    .splitScreenContainer {
-        flex-direction: column;
-        height: auto;
-    }
-
-    .playgroundColumn {
-        width: 100%;
-        border-left: none;
-        border-top: 1px solid var(--color-border);
-        height: 480px;
-    }
-
-    .canvasColumn {
-        height: 400px;
-    }
-}
+/* Legacy mobile media query removed because playground is now floating */
 
 /* ==========================================
    DRAWER UX IMPROVEMENTS
@@ -1676,6 +1796,66 @@
     transition: all 0.2s ease;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   UNIFIED TOP BAR
+   ═══════════════════════════════════════════════════════════ */
+.topBar {
+    display: flex;
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    padding: 12px 24px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 24px;
+    flex-shrink: 0;
+}
+
+.topBarBack {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.topBarTabs {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.topBarTabButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 24px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.topBarSave {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 6px;
+}
+
+.tabTextShort {
+    display: none;
+}
+
 .obsidianNodeDotActive {
     transform: scale(1.4);
     border-color: #fff;
@@ -1769,6 +1949,96 @@
     animation: brainPulse 2s infinite ease-in-out;
 }
 
+/* Obsidian Modal Responsive */
+@media (max-width: 768px) {
+    .obsidianHeader {
+        display: none;
+    }
+
+    /* Top Bar Responsive */
+    .topBar {
+        padding: 8px 12px;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .topBarBack span {
+        display: none;
+    }
+
+    .topBarTabs {
+        padding: 2px;
+    }
+
+    .topBarTabButton {
+        padding: 6px 12px;
+        font-size: 11px;
+        gap: 4px;
+    }
+
+    .tabTextFull {
+        display: none;
+    }
+    
+    .tabTextShort {
+        display: inline;
+    }
+
+    .topBarSave span {
+        display: none;
+    }
+
+    .topBarSave {
+        padding: 6px 10px;
+    }
+
+    .obsidianBody {
+        display: block;
+        position: relative;
+    }
+    
+    .obsidianSidebar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100% !important;
+        height: auto !important;
+        max-height: 50%;
+        border-left: none !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        z-index: 10;
+        border-top-left-radius: var(--radius-lg);
+        border-top-right-radius: var(--radius-lg);
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+        background: rgba(18, 20, 28, 0.95) !important;
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease;
+    }
+
+    .obsidianGraph {
+        height: 100% !important;
+        width: 100%;
+    }
+
+    .obsidianModal {
+        width: 100vw;
+        height: 100dvh;
+    }
+
+    .obsidianHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .obsidianSearch {
+        width: 100%;
+    }
+    .obsidianSearch:focus {
+        width: 100%;
+    }
+}
+
 @keyframes ripple {
     0% { transform: scale(0.6); opacity: 0.8; }
     100% { transform: scale(1.5); opacity: 0; }
@@ -1784,4 +2054,64 @@
     pointer-events: none;
 }
 
+/* Mobile Floating Chat Bubble Styles */
+.mobileChatFab {
+    display: none;
+}
 
+@media (max-width: 1024px) {
+    /* El splitScreenContainer mantiene su alto en movil porque el chat es flotante */
+
+    .mobileChatFab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: var(--color-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        z-index: 1001;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .mobileChatFab:active {
+        transform: scale(0.95);
+    }
+
+    .mobileChatFabActive {
+        background-color: var(--color-surface-hover);
+        color: var(--color-text-primary);
+    }
+
+    .playgroundColumn {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 340px;
+        height: 500px;
+        max-width: calc(100vw - 40px);
+        max-height: calc(100vh - 120px);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xl);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        transform: scale(0.9) translateY(20px);
+        transform-origin: bottom right;
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+
+    .playgroundColumnOpen {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+}

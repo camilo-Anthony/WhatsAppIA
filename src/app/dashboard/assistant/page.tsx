@@ -195,7 +195,7 @@ export default function AssistantListPage() {
                 </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-6)' }}>
+            <div className={styles.topActions}>
                 <button
                     className="btn btn-primary"
                     onClick={() => setShowCreateModal(true)}

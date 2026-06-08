@@ -86,3 +86,22 @@
 .footer a {
     font-weight: 500;
 }
+
+/* Responsive */
+@media (max-width: 480px) {
+    .container {
+        padding: var(--space-2);
+        align-items: flex-start;
+        padding-top: var(--space-10);
+        overflow-y: auto;
+    }
+
+    .form {
+        padding: var(--space-5);
+        border-radius: var(--radius-xl);
+    }
+
+    .title {
+        font-size: var(--font-size-2xl);
+    }
+}

@@ -13,7 +13,7 @@ export default function LandingPage() {
         <div className={`container ${styles.navContent}`}>
           <Link href="/" className={styles.navLogo}>
             <Logo size={32} />
-            <span>WhatsApp<span style={{ color: "var(--color-primary)" }}>Agent</span></span>
+            <span className={styles.navLogoText}>WhatsApp<span style={{ color: "var(--color-primary)" }}>Agent</span></span>
           </Link>
           <div className={styles.navActions}>
             <Link href="/login" className="btn btn-ghost">Iniciar sesión</Link>

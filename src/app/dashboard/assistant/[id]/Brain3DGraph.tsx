@@ -97,7 +97,8 @@ function getChamberStats(nodes: GraphNode[]): Record<BrainChamberKey, number> {
 function getDisplayName(n: GraphNode): string { return String(n.properties?.displayName || n.id) }
 function hexColor(n: number): string { return `#${n.toString(16).padStart(6, '0')}` }
 function isSameChamberEdge(edge: GraphEdge, nodeById: Map<string, GraphNode>): boolean {
-    if (edge.type === 'CORE_LINK') return true
+    const isCoreLink = edge.type === 'CORE_LINK' || (edge.source.startsWith('core-') && edge.target.startsWith('core-'))
+    if (isCoreLink) return true
     const source = nodeById.get(edge.source)
     const target = nodeById.get(edge.target)
     if (!source || !target) return false
@@ -300,7 +301,8 @@ function buildSynapseEdges(
         const sp = positions.get(edge.source), tp = positions.get(edge.target)
         if (!sp || !tp || !visible.has(edge.source) || !visible.has(edge.target)) continue
         
-        if (edge.type === 'CORE_LINK') {
+        const isCoreLink = edge.type === 'CORE_LINK' || (edge.source.startsWith('core-') && edge.target.startsWith('core-'))
+        if (isCoreLink) {
             const src = new THREE.Vector3(...sp), tgt = new THREE.Vector3(...tp)
             const path = new THREE.LineCurve3(src, tgt)
             const geometry = new THREE.TubeGeometry(path, 2, 0.006, 6, false)
@@ -388,7 +390,8 @@ function deformPosition(x: number, y: number, z: number, key: BrainChamberKey): 
     let by = sy
     let bz = -sz // Flip Z to match the old coordinate space where -z was front
 
-    const side = bx < 0 ? -1 : 1
+    // Si el nodo está exactamente en X=0 (nodos centrales), side=0 para que se quede en el medio de la fisura
+    const side = Math.abs(bx) < 0.0001 ? 0 : (bx < 0 ? -1 : 1)
 
     // Old brain proportions
     bx *= 0.92; by *= 0.96; bz *= 1.08
@@ -810,31 +813,12 @@ export default function Brain3DGraph({ nodes, edges, searchQuery, activeNodeId, 
 
     // ─── INJECT VIRTUAL CORE NODES & RADIAL EDGES ───
     const extendedNodes = useMemo(() => {
-        if (nodes.length === 0) return []
-        const coreNodes: GraphNode[] = BRAIN_CHAMBERS.map(ch => ({
-            id: `core-${ch.key}`,
-            labels: [ch.title.toUpperCase()],
-            properties: { displayName: ch.title, description: `Centro neural de la cámara de ${ch.title}.` }
-        }))
-        return [...coreNodes, ...nodes]
+        return nodes
     }, [nodes])
 
     const extendedEdges = useMemo(() => {
-        if (nodes.length === 0) return []
-        const radialEdges: GraphEdge[] = nodes.map(n => ({
-            id: `radial-${n.id}`,
-            source: `core-${getChamberForNode(n).key}`,
-            target: n.id,
-            type: 'BRANCHES_TO'
-        }))
-        const coreEdges: GraphEdge[] = [
-            { source: 'core-identidad', target: 'core-conocimiento', type: 'CORE_LINK' },
-            { source: 'core-identidad', target: 'core-herramientas', type: 'CORE_LINK' },
-            { source: 'core-identidad', target: 'core-memoria', type: 'CORE_LINK' },
-            { source: 'core-conocimiento', target: 'core-memoria', type: 'CORE_LINK' },
-        ]
-        return [...edges, ...radialEdges, ...coreEdges]
-    }, [nodes, edges])
+        return edges
+    }, [edges])
 
     const nodeById = useMemo(
         () => new Map(extendedNodes.map((node) => [node.id, node])),
