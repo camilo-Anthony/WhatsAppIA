@@ -48,13 +48,61 @@ export async function POST(request: Request) {
             })
         }
 
+        // Buscar o crear conversación de Sandbox para mantener el historial
+        let conversation = await prisma.conversation.findFirst({
+            where: {
+                userId: session.user.id,
+                clientPhone: "sandbox",
+            },
+        })
+
+        const expectedName = session.user.name || "Creador del Agente"
+
+        if (!conversation) {
+            conversation = await prisma.conversation.create({
+                data: {
+                    userId: session.user.id,
+                    clientPhone: "sandbox",
+                    clientName: expectedName,
+                    isArchived: true, // Lo mantenemos archivado para que no sature el inbox principal
+                },
+            })
+        } else if (conversation.clientName !== expectedName) {
+            conversation = await prisma.conversation.update({
+                where: { id: conversation.id },
+                data: { clientName: expectedName },
+            })
+        }
+
+        // Guardar mensaje entrante
+        await prisma.message.create({
+            data: {
+                conversationId: conversation.id,
+                connectionId: connection.id,
+                direction: "INCOMING",
+                content: message,
+            },
+        })
+
         const result = await agentPipeline({
             userId: session.user.id,
             connectionId: connection.id,
-            conversationId: "sandbox-conversation",
-            clientPhone: "sandbox-client-phone",
+            conversationId: conversation.id,
+            clientPhone: "sandbox",
             messageContent: message,
         })
+
+        // Guardar respuesta saliente
+        if (result.response) {
+            await prisma.message.create({
+                data: {
+                    conversationId: conversation.id,
+                    connectionId: connection.id,
+                    direction: "OUTGOING",
+                    content: result.response,
+                },
+            })
+        }
 
         return NextResponse.json(result)
     } catch (error) {

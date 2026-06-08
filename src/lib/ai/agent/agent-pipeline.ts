@@ -191,10 +191,9 @@ async function agentPipelineInner(
 
         const messages: AIMessage[] = [{ role: "system", content: historyPrompt }]
 
-        const clientIdentity = escapePromptContent(
-            conversation?.clientName ? `${conversation.clientName} (${clientPhone})` : clientPhone,
-            100
-        )
+        // Por petición de diseño: No inyectar el nombre del cliente extraído de la base de datos o WhatsApp.
+        // El agente debe descubrir el nombre conversando de forma natural (o leerlo de su <MEMORY> si ya lo aprendió antes).
+        const clientIdentity = escapePromptContent(clientPhone, 100)
 
         for (const msg of recentMessages) {
             const safeContent = msg.direction === "INCOMING"
@@ -902,13 +901,17 @@ async function learnFromInteraction(
     assistantResponse: string
 ): Promise<void> {
     try {
-        const extractionPrompt = `Analiza esta interacción y extrae datos factuales del usuario.
-Responde SOLO en formato JSON array. Cada elemento debe tener "key" (categoría corta) y "value" (dato concreto).
+        const extractionPrompt = `Analiza esta interacción y extrae datos factuales e información personal DEL USUARIO.
+REGLAS IMPORTANTES:
+1. Extrae ÚNICAMENTE información que el usuario diga o confirme sobre sí mismo (su nombre, su empresa, sus gustos, sus necesidades).
+2. Ignora por completo cualquier dato del ASISTENTE, de su dueña/propietaria (ej. Yini) o del programador/propietario de la cuenta (ej. Camilo). NUNCA guardes datos del asistente o de Camilo como si fueran del usuario.
+3. Si el usuario pregunta cosas o el asistente responde con datos sobre sí mismo, IGNÓRALOS.
+4. Responde SOLO en formato JSON array. Cada elemento debe tener "key" (categoría corta) y "value" (dato concreto).
 Categorías válidas: nombre, telefono, empresa, cargo, preferencia, direccion, email, dato_clave.
-Si no hay información relevante, responde: []
+Si no hay información relevante confirmada del usuario, responde: []
 
 Ejemplo de respuesta:
-[{"key": "nombre", "value": "Camilo"}, {"key": "empresa", "value": "HostalApp"}]
+[{"key": "nombre", "value": "Maria"}, {"key": "empresa", "value": "Acme Corp"}]
 
 Interacción:
 Usuario: ${userMessage}
@@ -917,7 +920,7 @@ Asistente: ${assistantResponse}
 JSON:`
 
         const response = await generateResponse([
-            { role: "system", content: "Extrae hechos factuales en formato JSON array. Solo hechos confirmados del usuario. Responde SOLO el JSON, nada más." },
+            { role: "system", content: "Extrae hechos factuales en formato JSON array. Solo hechos confirmados DEL USUARIO. Ignora datos del asistente o de su creador/dueño (Camilo). Responde SOLO el JSON, nada más." },
             { role: "user", content: extractionPrompt }
         ], {
             temperature: 0.1,
