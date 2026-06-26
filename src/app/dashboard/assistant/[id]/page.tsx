@@ -3,7 +3,7 @@
 
 import { use, useCallback, useEffect, useState, useRef, useMemo } from "react"
 import Link from "next/link"
-import { Shield, X, BookOpen, Calendar, Hammer, Send, Trash, Smartphone, Play, Loader2, ExternalLink, FileText, Settings, MessageSquare, Brain, ChevronLeft, Save, Check } from "lucide-react"
+import { Shield, X, BookOpen, Calendar, Hammer, Send, Trash, Smartphone, Play, Loader2, ExternalLink, FileText, Settings, MessageSquare, Brain, ChevronLeft, Save, Check, Copy } from "lucide-react"
 import {
     ReactFlow,
     Background,
@@ -357,6 +357,7 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
     const [sending, setSending] = useState(false)
     const chatEndRef = useRef<HTMLDivElement>(null)
     const [isMobileChatOpen, setIsMobileChatOpen] = useState(false)
+    const [copySuccess, setCopySuccess] = useState(false)
 
     // React Flow States
     const [nodes, setNodes] = useNodesState<Node>([])
@@ -900,6 +901,24 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
         } finally {
             setSending(false)
         }
+    }
+
+    // Copy Sandbox Chat to Clipboard
+    const handleCopyChat = () => {
+        if (messages.length === 0) return
+        
+        const chatText = messages.map(m => {
+            const role = m.role === "user" ? "Tú" : "Agente"
+            return `${role}:\n${m.content}`
+        }).join("\n\n")
+
+        navigator.clipboard.writeText(chatText).then(() => {
+            setCopySuccess(true)
+            setTimeout(() => setCopySuccess(false), 2000)
+        }).catch(err => {
+            console.error("Failed to copy chat: ", err)
+            alert("Error al copiar la conversación al portapapeles.")
+        })
     }
 
     if (loading) {
@@ -1587,14 +1606,24 @@ export default function AssistantBehaviorPage({ params }: { params: Promise<{ id
                 <div className={`${styles.playgroundColumn} ${isMobileChatOpen ? styles.playgroundColumnOpen : ""}`}>
                     <div className={styles.playgroundHeader}>
                         <h3 className={styles.playgroundTitle}>Sandbox del Agente</h3>
-                        <button 
-                            className="btn btn-icon btn-sm" 
-                            onClick={handleClearSandbox} 
-                            disabled={sending} 
-                            title="Borrar memoria e historial de Sandbox"
-                        >
-                            <Trash size={16} />
-                        </button>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                            <button 
+                                className="btn btn-icon btn-sm" 
+                                onClick={handleCopyChat} 
+                                disabled={messages.length === 0} 
+                                title="Copiar conversación"
+                            >
+                                {copySuccess ? <Check size={16} color="var(--color-success)" /> : <Copy size={16} />}
+                            </button>
+                            <button 
+                                className="btn btn-icon btn-sm" 
+                                onClick={handleClearSandbox} 
+                                disabled={sending} 
+                                title="Borrar memoria e historial de Sandbox"
+                            >
+                                <Trash size={16} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className={styles.playgroundChat}>
