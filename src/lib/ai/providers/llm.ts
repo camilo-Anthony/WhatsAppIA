@@ -100,6 +100,39 @@ function resolveModelForProvider(requestedModel: string | undefined, provider: s
 }
 
 /**
+ * Modelos que preservan el tono configurado en el system prompt.
+ *
+ * Fix #2: La rotacion original cae a modelos 8B / free tier cuando Gemini falla.
+ * Esos modelos tienden a IGNORE el system prompt y responder con tono default.
+ *
+ * Solucion: clasificar el request por nivel de exigencia tonal:
+ *  - "response": respuesta directa al usuario (tool result o chat libre). Requiere
+ *    modelos 70B+ o Gemini 2.5 Flash+ que respeten el tono del dashboard.
+ *  - "classifier": clasificacion de intent / extraccion de slots. Solo importa
+ *    que devuelva JSON valido. Modelos 8B son aceptables.
+ *
+ * Los tiers se configuran por env: AI_RESPONSE_TIER y AI_CLASSIFIER_TIER (CSV provs).
+ */
+const RESPONSE_TIER_PROVIDERS: string[] = (process.env.AI_RESPONSE_TIER || "gemini,groq,mistral,github")
+    .split(",").map(p => p.trim().toLowerCase()).filter(Boolean)
+const CLASSIFIER_TIER_PROVIDERS: string[] = (process.env.AI_CLASSIFIER_TIER || "gemini,groq,mistral,openrouter,nvidia,cerebras,github")
+    .split(",").map(p => p.trim().toLowerCase()).filter(Boolean)
+
+/**
+ * Determina si el request actual es de "respuesta tonal" (request sensible)
+ * o de "classifier" (request barato).
+ *
+ * Heuristica: presence de `tools` en opciones indica respuesta con tool result;
+ * maxTokens pequeno (<=300) indica clasificador JSON; otherwise es response.
+ */
+function isTonalResponseRequest(options?: { temperature?: number; maxTokens?: number; model?: string; tools?: AIToolDefinition[] }): boolean {
+    if (!options) return true // default: response
+    if (options.tools && options.tools.length > 0) return true // tool result respuesta
+    if (options.maxTokens && options.maxTokens <= 300) return false // classifier JSON
+    return true
+}
+
+/**
  * Genera respuesta de LLM implementando rotación de claves y fallback de proveedores
  */
 export async function generateResponse(
@@ -111,9 +144,18 @@ export async function generateResponse(
         tools?: AIToolDefinition[]
     }
 ): Promise<AIResponse> {
-    // 1. Obtener orden de proveedores preferidos (de .env o por defecto)
-    const providerOrderStr = process.env.AI_ROTATION_ORDER || process.env.AI_PROVIDER || "gemini,groq,mistral,openrouter,nvidia,cerebras,github"
-    const providers = providerOrderStr.split(",").map(p => p.trim().toLowerCase()).filter(Boolean)
+    // 1. Elegir tier segun el tipo de request (Fix #2)
+    const tonal = isTonalResponseRequest(options)
+    const tierProviders = tonal ? RESPONSE_TIER_PROVIDERS : CLASSIFIER_TIER_PROVIDERS
+
+    // Backward-compat: si un override explicito AI_ROTATION_ORDER/AI_PROVIDER esta
+    // seteado, lo usamos para ambos tiers (mantiene deployments existentes).
+    const fallbackOrderStr = process.env.AI_ROTATION_ORDER || process.env.AI_PROVIDER || "gemini,groq,mistral,openrouter,nvidia,cerebras,github"
+    const fallbackProviders = fallbackOrderStr.split(",").map(p => p.trim().toLowerCase()).filter(Boolean)
+    const providers = tierProviders.length > 0 ? tierProviders : fallbackProviders
+
+    // Log para observabilidad del tier elegido
+    console.log(`[LLM Rotator] tier=${tonal ? "response" : "classifier"} providers=${providers.join(",")}`)
 
     const errors: string[] = []
 

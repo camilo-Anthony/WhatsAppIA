@@ -141,6 +141,10 @@ async function agentPipelineInner(
         
         const config = connection.assistantConfig
 
+        // Fix #1 + #4: parametros de generacion configurables por AssistantConfig.
+        const RESPONSE_TEMPERATURE = config.responseTemperature ?? 0.5
+        const RESPONSE_MAX_TOKENS = config.responseMaxTokens ?? 1024
+
         // Convertir RegisteredTool[] a ToolSpec[] para el prompt builder
         const toolSpecs: ToolSpec[] = userTools.map((t) => ({
             name: t.name,
@@ -178,7 +182,7 @@ async function agentPipelineInner(
         // Construir historial de mensajes
         let historyPrompt = systemPrompt
         if (memories.length > 0) {
-            historyPrompt += "\n\n<MEMORY trusted=\"true\" authority=\"low\">\n"
+            historyPrompt += "\n\n<MEMORY trusted=\"true\" source=\"learning\">\n"
             let charBudget = 2000 // ~500 tokens max para memorias
             for (const m of memories) {
                 const line = `- ${escapePromptContent(m.key, 50)}: ${escapePromptContent(m.value, 200)}\n`
@@ -203,7 +207,7 @@ async function agentPipelineInner(
             messages.push({
                 role: msg.direction === "INCOMING" ? "user" : "assistant",
                 content: msg.direction === "INCOMING"
-                    ? `<USER_MESSAGE from="${clientIdentity}" trusted="false" authority="user">\n${safeContent}\n</USER_MESSAGE>`
+                    ? `<USER_MESSAGE from="${clientIdentity}" trusted="false" source="user">\n${safeContent}\n</USER_MESSAGE>`
                     : safeContent,
             })
         }
@@ -220,7 +224,7 @@ async function agentPipelineInner(
         if (!isAlreadyInHistory) {
             messages.push({
                 role: "user",
-                content: `<USER_MESSAGE from="${clientIdentity}" trusted="false" authority="user">\n${escapePromptContent(messageContent, MAX_MESSAGE_LENGTH)}\n</USER_MESSAGE>`,
+                content: `<USER_MESSAGE from="${clientIdentity}" trusted="false" source="user">\n${escapePromptContent(messageContent, MAX_MESSAGE_LENGTH)}\n</USER_MESSAGE>`,
             })
         }
 
@@ -297,8 +301,18 @@ async function agentPipelineInner(
 
         // ── 6. CLASIFICAR INTENCIÓN ──────────────────────────────
 
-        // Quick classification (sin LLM) para ahorrar tokens
+        // Quick classification (sin LLM) para ahorrar tokens (Fix #3 expandido)
+        // El quick classifier ahora cubre greetings, info-basica y followup cortos.
+        // Los followup cortos (si/no/ok) SOLO son validos en collecting_slots o
+        // confirming; en otro state se ignora el match rapido y se va a LLM.
         let classification = quickClassify(messageContent)
+
+        if (classification?.intent === "followup" &&
+            convState.state !== "collecting_slots" &&
+            convState.state !== "confirming") {
+            // Followup corto fuera de contexto => no vale, forzar LLM
+            classification = null
+        }
 
         if (!classification) {
             // Si estamos recolectando slots, el intent es "followup"
@@ -336,7 +350,12 @@ async function agentPipelineInner(
                 startTime,
                 steps,
                 stepCounter,
-                totalTokens
+                totalTokens,
+                {
+                    temperature: RESPONSE_TEMPERATURE,
+                    maxTokens: RESPONSE_MAX_TOKENS,
+                    ...(config.preferredModel ? { model: config.preferredModel } : {}),
+                }
             )
         }
 
@@ -352,7 +371,12 @@ async function agentPipelineInner(
                 startTime,
                 steps,
                 stepCounter,
-                totalTokens
+                totalTokens,
+                {
+                    temperature: RESPONSE_TEMPERATURE,
+                    maxTokens: RESPONSE_MAX_TOKENS,
+                    ...(config.preferredModel ? { model: config.preferredModel } : {}),
+                }
             )
         }
 
@@ -382,7 +406,12 @@ async function agentPipelineInner(
                     startTime,
                     steps,
                     stepCounter,
-                    totalTokens
+                    totalTokens,
+                    {
+                        temperature: RESPONSE_TEMPERATURE,
+                        maxTokens: 512, // slot prompt es corto
+                        ...(config.preferredModel ? { model: config.preferredModel } : {}),
+                    }
                 )
             }
 
@@ -399,7 +428,12 @@ async function agentPipelineInner(
                     toolSpecs,
                     steps,
                     stepCounter,
-                    totalTokens
+                    totalTokens,
+                    {
+                        temperature: RESPONSE_TEMPERATURE,
+                        maxTokens: RESPONSE_MAX_TOKENS,
+                        ...(config.preferredModel ? { model: config.preferredModel } : {}),
+                    }
                 )
                 await resetToIdle(userId, clientPhone)
                 return {
@@ -423,7 +457,12 @@ async function agentPipelineInner(
                     startTime,
                     steps,
                     stepCounter,
-                    totalTokens
+                    totalTokens,
+                    {
+                        temperature: RESPONSE_TEMPERATURE,
+                        maxTokens: 512, // confirm prompt es corto
+                        ...(config.preferredModel ? { model: config.preferredModel } : {}),
+                    }
                 )
             }
         }
@@ -434,7 +473,12 @@ async function agentPipelineInner(
             startTime,
             steps,
             stepCounter,
-            totalTokens
+            totalTokens,
+            {
+                temperature: RESPONSE_TEMPERATURE,
+                maxTokens: RESPONSE_MAX_TOKENS,
+                ...(config.preferredModel ? { model: config.preferredModel } : {}),
+            }
         )
 
     } catch (error) {
@@ -457,7 +501,8 @@ async function executeToolAction(
     toolSpecs: ToolSpec[],
     steps: AgentStep[],
     stepCounter: number,
-    totalTokens: { prompt: number; completion: number; total: number }
+    totalTokens: { prompt: number; completion: number; total: number },
+    genOpts: { temperature?: number; maxTokens?: number; model?: string } = {}
 ): Promise<Omit<AgentPipelineResult, "runId" | "totalDurationMs" | "finalState">> {
     const startTime = Date.now()
     const loopDetector = new LoopDetector()
@@ -537,9 +582,10 @@ async function executeToolAction(
 
     const llmResponse = await withRetry(() =>
         generateResponse(toolResultMessages, {
-            temperature: 0.7,
-            maxTokens: 512,
+            temperature: genOpts.temperature ?? 0.5,   // Fix #4
+            maxTokens: genOpts.maxTokens ?? 1024,       // Fix #1
             tools: groqTools,
+            ...(genOpts.model ? { model: genOpts.model } : {}),
         })
     )
 
@@ -582,7 +628,8 @@ async function handleSlotCollection(
     startTime: number,
     steps: AgentStep[],
     stepCounter: number,
-    totalTokens: { prompt: number; completion: number; total: number }
+    totalTokens: { prompt: number; completion: number; total: number },
+    genOpts: { temperature?: number; maxTokens?: number; model?: string } = {}
 ): Promise<AgentPipelineResult> {
     // Usar LLM para extraer datos del mensaje del usuario
     const extraction = await withRetry(() =>
@@ -609,7 +656,8 @@ async function handleSlotCollection(
             startTime,
             steps,
             stepCounter,
-            totalTokens
+            totalTokens,
+            genOpts
         )
     }
 
@@ -626,7 +674,8 @@ async function handleSlotCollection(
             toolSpecs,
             steps,
             stepCounter,
-            totalTokens
+            totalTokens,
+            genOpts
         )
         await resetToIdle(userId, clientPhone)
         return {
@@ -649,7 +698,8 @@ async function handleSlotCollection(
         startTime,
         steps,
         stepCounter,
-        totalTokens
+        totalTokens,
+        genOpts
     )
 }
 
@@ -662,13 +712,15 @@ async function generateSimpleLLMResponse(
     startTime: number,
     steps: AgentStep[],
     stepCounter: number,
-    totalTokens: { prompt: number; completion: number; total: number }
+    totalTokens: { prompt: number; completion: number; total: number },
+    genOpts: { temperature?: number; maxTokens?: number; model?: string } = {}
 ): Promise<AgentPipelineResult> {
     const llmStart = Date.now()
     const response = await withRetry(() =>
         generateResponse(messages, {
-            temperature: 0.7,
-            maxTokens: 512,
+            temperature: genOpts.temperature ?? 0.5,   // Fix #4: baja para consistencia tonal
+            maxTokens: genOpts.maxTokens ?? 1024,       // Fix #1: sube de 512 para que el modelo procese tono
+            ...(genOpts.model ? { model: genOpts.model } : {}),
         })
     )
 
@@ -707,7 +759,8 @@ async function askForSlot(
     startTime: number,
     steps: AgentStep[],
     stepCounter: number,
-    totalTokens: { prompt: number; completion: number; total: number }
+    totalTokens: { prompt: number; completion: number; total: number },
+    genOpts: { temperature?: number; maxTokens?: number; model?: string } = {}
 ): Promise<AgentPipelineResult> {
     // Agregar instrucción específica para pedir el slot
     const safeIntentName = escapePromptContent(intentName, 120)
@@ -730,7 +783,8 @@ async function askForSlot(
         startTime,
         steps,
         stepCounter,
-        totalTokens
+        totalTokens,
+        genOpts
     )
 }
 
@@ -741,7 +795,8 @@ async function askForConfirmation(
     startTime: number,
     steps: AgentStep[],
     stepCounter: number,
-    totalTokens: { prompt: number; completion: number; total: number }
+    totalTokens: { prompt: number; completion: number; total: number },
+    genOpts: { temperature?: number; maxTokens?: number; model?: string } = {}
 ): Promise<AgentPipelineResult> {
     const safeIntentName = escapePromptContent(intentName, 120)
     const safeSlots = escapePromptContent(JSON.stringify(slots), 1500)
@@ -762,7 +817,8 @@ async function askForConfirmation(
         startTime,
         steps,
         stepCounter,
-        totalTokens
+        totalTokens,
+        genOpts
     )
 
     return { ...result, finalState: "confirming" }
@@ -777,6 +833,10 @@ async function loadBusinessInfo(
     config: { id: string; infoMode: string; simpleInfo: string | null },
     userQuery?: string
 ): Promise<Array<{ label: string; value: string }>> {
+    // Fix #6: Eliminar fallback a assistantConfigId=null. Cada asistente usa
+    // exclusivamente sus propios InfoFields. Si no hay, no hay conocimiento
+    // del negocio para esa conversacion (respuesta vacia, no contaminar con
+    // datos de otro asistente del mismo usuario).
     if (config.infoMode === "RAG" && userQuery) {
         try {
             const ragClient = new LightRAGClient()
@@ -805,12 +865,9 @@ async function loadBusinessInfo(
         orderBy: { order: "asc" },
     })
 
-    if (fields.length === 0) {
-        fields = await prisma.infoField.findMany({
-            where: { userId, assistantConfigId: null },
-            orderBy: { order: "asc" },
-        })
-    }
+    // Fix #6: SE ELIMINA fallback a assistantConfigId=null. Era multi-tenancy bug.
+    // Si el asistente no tiene InfoFields configurados, simplemente no se
+    // inyecta conocimiento del negocio. No contaminar con InfoFields globales.
 
     for (const field of fields) {
         field.label = escapePromptContent(field.label, 80)

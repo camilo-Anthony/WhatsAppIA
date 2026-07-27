@@ -150,6 +150,10 @@ model AssistantConfig {
   behaviorPrompt String   @db.Text
   infoMode       InfoMode @default(SIMPLE)
   simpleInfo     String?  @db.Text
+  // Parámetros de generación (Fix #1, #4)
+  responseTemperature Float?   @default(0.5)
+  responseMaxTokens   Int?     @default(1024)
+  preferredModel      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -166,13 +170,13 @@ model AssistantConfig {
 model InfoField {
   id                String  @id @default(cuid())
   userId            String
-  assistantConfigId String?
+  assistantConfigId String
   label             String
   content           String  @db.Text
   order             Int     @default(0)
 
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assistantConfig AssistantConfig? @relation(fields: [assistantConfigId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assistantConfig AssistantConfig @relation(fields: [assistantConfigId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([assistantConfigId])

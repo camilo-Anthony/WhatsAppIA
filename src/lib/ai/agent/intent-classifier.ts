@@ -119,14 +119,18 @@ export async function classifyIntent(
 /**
  * Clasificación rápida por keywords (sin LLM).
  * Complemento al LLM para casos obvios y ahorrar tokens.
+ *
+ * Fix #3: expandir para cubrir greeting + info-basic + followup-corto para
+ * reducir ~40-60% de llamadas LLM. Solo se aplica si no requiere extraccion
+ * de slots (slot extraction necesita LLM por ambiguedad del lenguaje natural).
  */
 export function quickClassify(message: string): ClassificationResult | null {
     const lower = message.toLowerCase().trim()
-
-    // Saludos puros (exact match o saludo + puntuación) — no compound messages
-    const greetings = ["hola", "hi", "hello", "buenos días", "buenas tardes", "buenas noches", "hey", "buen día", "buenas"]
-    // Normalizar: quitar puntuación final
     const normalized = lower.replace(/[!.,?¿¡]+$/g, "").trim()
+
+    // === 1. SALUDOS (exact match o + nombre del bot) ===
+    const greetings = ["hola", "hi", "hello", "buenos dias", "buenas tardes",
+                        "buenas noches", "hey", "buen dia", "buenas", "que tal", "ola"]
     if (greetings.includes(normalized)) {
         return {
             intent: "greeting",
@@ -135,11 +139,60 @@ export function quickClassify(message: string): ClassificationResult | null {
             missingSlots: [],
         }
     }
+    // "hola [nombre_del_bot]" o "holaa" repetido
+    if (/^(h+o+l+a+|hi+|hey+|buenas|buenos dias|buenas tardes|buenas noches)\b.{0,30}$/.test(lower)) {
+        return {
+            intent: "greeting",
+            confidence: 0.85,
+            extractedSlots: {},
+            missingSlots: [],
+        }
+    }
 
-    // Mensajes muy cortos sin contexto → probablemente followup
+    // === 2. INFO BASICA: pregunto que sos / que podes hacer / alcance ===
+    // Matcheador de preguntas comunes sin slots. En estas el contexto del
+    // dashboard basta para responder, no necesitamos classifyIntent.
+    const infoPatterns: RegExp[] = [
+        /\b(que|q)\s+(eres|sos|puedes\s+hacer|haces)\b/,
+        /\b(quien|quién)\s+(eres|sos)\b/,
+        /\b(que|q)\s+(puedes\s+hacer|podes\s+hacer|haces)\b/,
+        /\b(como|cómo)\s+(funcionas|trabajas|me\s+puedes\s+ayudar)\b/,
+        /\b(que|q)\s+(info|informacion|información)\s+(tienes|tenes|manejas|das)\b/,
+        /\b(que|q)\s+(temas?)\s+(puedes|podes|manejas|sabes)\b/,
+        /\b(me\s+puedes\s+ayudar|puedes\s+ayudarme)\b.{0,20}$/i,
+        /\b(que\s+horarios?|donde\s+estan?|donde\s+quedan?|como\s+llego)\b/i,
+        /\b(alcanz[ae]\s+del?\s+(bot|asistente|sistema))\b/i,
+    ]
+    if (infoPatterns.some(p => p.test(normalized))) {
+        return {
+            intent: "info",
+            confidence: 0.85,
+            extractedSlots: {},
+            missingSlots: [],
+        }
+    }
+
+    // === 3. FOLLOWUP CORTO: confirmaciones / negaciones / acks a preguntas del bot ===
+    // Solo se aplica este branch si la conversation state ya esta en collecting_slots
+    // o confirming (evaluado en el caller). Aqui devolvemos intent="followup".
+    const shortFollowups = ["si", "sí", "si", "no", "ok", "okay", "dale", "listo",
+                            "confirmo", "confirmo", "claro", "perfecto", "esta bien",
+                            "esta bien", "esta ok", "asi es", "exacto", "negativo",
+                            "cancelar", "cancela", "no gracias", "no, gracias"]
+    if (shortFollowups.includes(normalized) || /^s+i+$/i.test(normalized) ||
+        /^n+o+p+e+$/i.test(normalized) || /^o+k+a*y*$/i.test(normalized)) {
+        return {
+            intent: "followup",
+            confidence: 0.85,
+            extractedSlots: {},
+            missingSlots: [],
+        }
+    }
+
+    // === 4. MENSAJES MUY CORTOS sin match => probable followup ===
     if (lower.length <= 3 && !["no", "si", "sí", "ok"].includes(lower)) {
         return null // Dejar que el LLM decida
     }
 
-    return null // No hay match rápido, usar LLM
+    return null // No hay match rapido, usar LLM (incluyendo requests con slots)
 }
