@@ -73,7 +73,7 @@ function resolveModelForProvider(requestedModel: string | undefined, provider: s
     if (provider === "groq") {
         if (isCoder) return "qwen-2.5-coder-32b"
         if (isLarge) return "llama-3.3-70b-versatile"
-        return process.env.GROQ_MODEL || "llama-3.1-8b-instant"
+        return process.env.GROQ_MODEL || "llama-3.3-70b-versatile"
     }
     if (provider === "mistral") {
         if (isCoder) return "codestral-latest"
