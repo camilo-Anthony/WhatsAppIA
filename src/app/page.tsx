@@ -17,7 +17,7 @@ export default function LandingPage() {
           </Link>
           <div className={styles.navActions}>
             <Link href="/login" className="btn btn-ghost">Iniciar sesión</Link>
-            <Link href="/register" className="btn btn-primary">crear cuenta</Link>
+            <Link href="/register" className="btn btn-primary">Crear cuenta</Link>
           </div>
         </div>
       </nav>
