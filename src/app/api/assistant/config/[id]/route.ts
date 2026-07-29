@@ -41,17 +41,10 @@ export async function GET(
 
         // Obtener los InfoFields asociados (actualmente están atados al usuario de forma global, 
         // pero se mantendrán por compatibilidad hasta que migremos InfoField para que dependan de AssistantConfig)
-        let infoFields = await prisma.infoField.findMany({
+        const infoFields = await prisma.infoField.findMany({
             where: { userId: session.user.id, assistantConfigId: profileId },
             orderBy: { order: "asc" },
         })
-
-        if (infoFields.length === 0) {
-            infoFields = await prisma.infoField.findMany({
-                where: { userId: session.user.id, assistantConfigId: null },
-                orderBy: { order: "asc" },
-            })
-        }
 
         return NextResponse.json({ profile, infoFields })
     } catch (error) {
