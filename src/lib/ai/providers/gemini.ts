@@ -128,6 +128,11 @@ export async function generateGeminiResponse(
         }
 
         // 4. Llamada al modelo
+        // Fix: Bajar safetySettings al threshold minimo que Google permite (BLOCK_ONLY_HIGH).
+        // Sin esto, Gemini auto-censura tonos configurados desde el dashboard (sarcastico,
+        // grosero suave, informal, humor negro) aunque el system prompt lo pida explicitamente.
+        // BLOCK_ONLY_HIGH solo bloquea contenido severo (discurso de odio grave, danno fisico),
+        // NO bloquea tonos creativos que el usuario configuro intencionalmente.
         const response = await client.models.generateContent({
             model,
             contents,
@@ -136,6 +141,13 @@ export async function generateGeminiResponse(
                 temperature,
                 maxOutputTokens: maxTokens,
                 tools: geminiTools.length > 0 ? geminiTools : undefined,
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_CIVIC_INTEGRITY", threshold: "BLOCK_ONLY_HIGH" },
+                ],
             }
         });
 
