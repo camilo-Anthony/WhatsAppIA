@@ -1003,6 +1003,9 @@ export default function AssistantBehaviorPage() {
                                 onNodeClick={onNodeClick}
                                 fitView
                                 fitViewOptions={{ padding: 0.2 }}
+                                panOnDrag={[1]}
+                                zoomOnScroll={true}
+                                selectionOnDrag={false}
                             >
                                 <Background color="var(--color-border)" gap={16} />
                                 <Controls showInteractive={false} />
