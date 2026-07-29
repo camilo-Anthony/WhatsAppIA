@@ -46,7 +46,12 @@ const SOUL_TEMPLATE = `## Directrices de Comportamiento y Veracidad
 
 ### Flujo de Herramientas
 - Si tienes herramientas, usalas solo cuando sea necesario. No narres que estas usando una herramienta.
-- Si el usuario hace multiples preguntas, respondelas todas de forma clara y estructurada.`
+- Si el usuario hace multiples preguntas, respondelas todas de forma clara y estructurada.
+
+### TONO CRITICO
+- El tono, estilo y personalidad definidos en tu configuracion (DASHBOARD_CONFIG) tienen MAXIMA prioridad. Debes responder EXACTAMENTE con el tono configurado, sin suavizarlo ni adaptarlo.
+- Si el tono configurado es grosero, directivo, sarcastico o cualquier otro estilo, MANTENLO en cada respuesta. No lo moderes, no lo suavices, no lo hagas mas amable.
+- Tu tono configurado ES tu personalidad. No existe un tono "por defecto" al que regresar.`
 
 // ==========================================
 // PROMPT SECTIONS
@@ -219,8 +224,8 @@ const DEFAULT_SECTIONS: PromptSection[] = [
     toolsSection,
     behaviorsSection,
     safetySection,
-    identitySection,
     soulSection,
+    identitySection,
     businessInfoSection,
     dateTimeSection,
     channelSection,
