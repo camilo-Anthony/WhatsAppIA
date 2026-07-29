@@ -113,9 +113,9 @@ function resolveModelForProvider(requestedModel: string | undefined, provider: s
  *
  * Los tiers se configuran por env: AI_RESPONSE_TIER y AI_CLASSIFIER_TIER (CSV provs).
  */
-const RESPONSE_TIER_PROVIDERS: string[] = (process.env.AI_RESPONSE_TIER || "gemini,groq,mistral,github")
+const RESPONSE_TIER_PROVIDERS: string[] = (process.env.AI_RESPONSE_TIER || "groq,gemini,mistral,github")
     .split(",").map(p => p.trim().toLowerCase()).filter(Boolean)
-const CLASSIFIER_TIER_PROVIDERS: string[] = (process.env.AI_CLASSIFIER_TIER || "gemini,groq,mistral,openrouter,nvidia,cerebras,github")
+const CLASSIFIER_TIER_PROVIDERS: string[] = (process.env.AI_CLASSIFIER_TIER || "groq,gemini,mistral,openrouter,nvidia,cerebras,github")
     .split(",").map(p => p.trim().toLowerCase()).filter(Boolean)
 
 /**
@@ -150,7 +150,7 @@ export async function generateResponse(
 
     // Backward-compat: si un override explicito AI_ROTATION_ORDER/AI_PROVIDER esta
     // seteado, lo usamos para ambos tiers (mantiene deployments existentes).
-    const fallbackOrderStr = process.env.AI_ROTATION_ORDER || process.env.AI_PROVIDER || "gemini,groq,mistral,openrouter,nvidia,cerebras,github"
+    const fallbackOrderStr = process.env.AI_ROTATION_ORDER || process.env.AI_PROVIDER || "groq,gemini,mistral,openrouter,nvidia,cerebras,github"
     const fallbackProviders = fallbackOrderStr.split(",").map(p => p.trim().toLowerCase()).filter(Boolean)
     const providers = tierProviders.length > 0 ? tierProviders : fallbackProviders
 
