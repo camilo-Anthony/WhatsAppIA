@@ -1,8 +1,9 @@
 "use client"
 
 
-import { use, useCallback, useEffect, useState, useRef, useMemo } from "react"
+import { useCallback, useEffect, useState, useRef, useMemo } from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { Shield, X, BookOpen, Calendar, Hammer, Send, Trash, Smartphone, Play, Loader2, ExternalLink, FileText, Settings, MessageSquare, Brain, ChevronLeft, Save, Check, Copy } from "lucide-react"
 import {
     ReactFlow,
@@ -328,8 +329,9 @@ const formatRelationType = (type?: string): string => {
 // MAIN COMPONENT
 // ==========================================
 
-export default function AssistantBehaviorPage({ params }: { params: Promise<{ id: string }> }) {
-    const resolvedParams = use(params)
+export default function AssistantBehaviorPage() {
+    const params = useParams<{ id: string }>()
+    const resolvedParams = { id: params?.id ?? "" }
     const [profile, setProfile] = useState<AssistantProfile | null>(null)
     const [behaviorConfig, setBehaviorConfig] = useState<StructuredDashboardConfig>(
         DEFAULT_STRUCTURED_DASHBOARD_CONFIG

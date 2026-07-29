@@ -2,17 +2,15 @@
 
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
-
-import { use } from "react"
+import { useParams } from "next/navigation"
 
 export default function SingleAssistantLayout({
     children,
-    params,
 }: {
     children: React.ReactNode
-    params: Promise<{ id: string }>
 }) {
-    const resolvedParams = use(params)
+    const params = useParams<{ id: string }>()
+    const resolvedParams = { id: params?.id ?? "" }
 
     // Redirect away from "new" — creation now happens via modal in the list page
     if (resolvedParams.id === "new") {
