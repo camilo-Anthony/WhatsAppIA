@@ -1006,6 +1006,8 @@ export default function AssistantBehaviorPage() {
                                 panOnDrag={[1]}
                                 zoomOnScroll={true}
                                 selectionOnDrag={false}
+                                zoomOnKeyPress={false}
+                                panOnKeyPress={false}
                             >
                                 <Background color="var(--color-border)" gap={16} />
                                 <Controls showInteractive={false} />
