@@ -391,6 +391,20 @@ export default function AssistantBehaviorPage() {
         loadIntegrations()
     }, [loadIntegrations])
 
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === " ") {
+                const el = e.target as HTMLElement
+                const tag = el?.tagName
+                if (tag === "INPUT" || tag === "TEXTAREA") {
+                    e.stopPropagation()
+                }
+            }
+        }
+        window.addEventListener("keydown", handler, true)
+        return () => window.removeEventListener("keydown", handler, true)
+    }, [])
+
     const handleToggleIntegration = async (integrationId: string, currentActive: boolean) => {
         try {
             const res = await fetch("/api/integrations", {
