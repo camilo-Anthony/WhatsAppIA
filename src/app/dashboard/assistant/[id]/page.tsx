@@ -391,20 +391,6 @@ export default function AssistantBehaviorPage() {
         loadIntegrations()
     }, [loadIntegrations])
 
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === " ") {
-                const el = e.target as HTMLElement
-                const tag = el?.tagName
-                if (tag === "INPUT" || tag === "TEXTAREA") {
-                    e.stopPropagation()
-                }
-            }
-        }
-        window.addEventListener("keydown", handler, true)
-        return () => window.removeEventListener("keydown", handler, true)
-    }, [])
-
     const handleToggleIntegration = async (integrationId: string, currentActive: boolean) => {
         try {
             const res = await fetch("/api/integrations", {
@@ -1221,7 +1207,7 @@ export default function AssistantBehaviorPage() {
                             <input
                                 type="text"
                                 className="input"
-                                value={safeBehaviorConfig.agentIdentity ?? ""}
+                                value={behaviorConfig.agentIdentity ?? ""}
                                 onChange={(e) => updateBehaviorAnswers({ agentIdentity: e.target.value })}
                                 placeholder="Ej. Ana de Soporte, Dr. Martinez"
                                 style={{ padding: "6px 10px", fontSize: "var(--font-size-sm)", background: "rgba(0,0,0,0.2)" }}
@@ -1236,7 +1222,7 @@ export default function AssistantBehaviorPage() {
                             <textarea
                                 className="input textarea"
                                 style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
-                                value={safeBehaviorConfig.mission ?? ""}
+                                value={behaviorConfig.mission ?? ""}
                                 onChange={(e) => updateBehaviorAnswers({ mission: e.target.value })}
                                 placeholder="¿Cuál es la misión principal del agente?"
                             />
@@ -1252,7 +1238,7 @@ export default function AssistantBehaviorPage() {
                             <textarea
                                 className="input textarea"
                                 style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
-                                value={safeBehaviorConfig.toneAndFormat ?? ""}
+                                value={behaviorConfig.toneAndFormat ?? ""}
                                 onChange={(e) => updateBehaviorAnswers({ toneAndFormat: e.target.value })}
                                 placeholder="Ej. Habla de tú, responde corto y usa emojis."
                             />
@@ -1268,7 +1254,7 @@ export default function AssistantBehaviorPage() {
                             <textarea
                                 className="input textarea"
                                 style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
-                                value={safeBehaviorConfig.strictConstraints ?? ""}
+                                value={behaviorConfig.strictConstraints ?? ""}
                                 onChange={(e) => updateBehaviorAnswers({ strictConstraints: e.target.value })}
                                 placeholder="Reglas inviolables (una por línea)..."
                             />
