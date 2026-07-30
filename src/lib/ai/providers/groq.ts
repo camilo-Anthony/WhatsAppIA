@@ -128,7 +128,7 @@ export async function generateResponse(
             requestParams.tool_choice = "auto"
         }
 
-        const completion = await getGroqClient().chat.completions.create(requestParams)
+        const completion = await client.chat.completions.create(requestParams)
 
         const choice = completion.choices[0]
         const message = choice?.message

@@ -771,12 +771,9 @@ async function askForSlot(
         ...messages,
         {
             role: "system",
-            content: `El usuario quiere ejecutar "${intentName}". Ya tengo estos datos: ${JSON.stringify(collectedSlots)}. Necesito preguntarle por: "${slotName}". Haz UNA sola pregunta natural y concisa para obtener ese dato. NO menciones nombres técnicos de campos.`,
+            content: `El usuario quiere ejecutar "${safeIntentName}". Ya tengo estos datos saneados: ${safeSlots}. Necesito preguntarle por: "${safeSlotName}". Haz UNA sola pregunta natural y concisa para obtener ese dato. No menciones nombres tecnicos de campos.`,
         },
     ]
-
-    askMessages[askMessages.length - 1].content =
-        `El usuario quiere ejecutar "${safeIntentName}". Ya tengo estos datos saneados: ${safeSlots}. Necesito preguntarle por: "${safeSlotName}". Haz UNA sola pregunta natural y concisa para obtener ese dato. No menciones nombres tecnicos de campos.`
 
     return await generateSimpleLLMResponse(
         askMessages,
@@ -805,12 +802,9 @@ async function askForConfirmation(
         ...messages,
         {
             role: "system",
-            content: `El usuario quiere ejecutar "${intentName}" con estos datos: ${JSON.stringify(slots)}. Muestra un resumen claro y natural de la acción que voy a realizar y pregunta "¿Confirmas?". Sé conciso, máximo 2-3 oraciones.`,
+            content: `El usuario quiere ejecutar "${safeIntentName}" con estos datos saneados: ${safeSlots}. Muestra un resumen claro y natural de la accion que voy a realizar y pregunta "Confirmas?". Se conciso, maximo 2-3 oraciones.`,
         },
     ]
-
-    confirmMessages[confirmMessages.length - 1].content =
-        `El usuario quiere ejecutar "${safeIntentName}" con estos datos saneados: ${safeSlots}. Muestra un resumen claro y natural de la accion que voy a realizar y pregunta "Confirmas?". Se conciso, maximo 2-3 oraciones.`
 
     const result = await generateSimpleLLMResponse(
         confirmMessages,
@@ -869,12 +863,10 @@ async function loadBusinessInfo(
     // Si el asistente no tiene InfoFields configurados, simplemente no se
     // inyecta conocimiento del negocio. No contaminar con InfoFields globales.
 
-    for (const field of fields) {
-        field.label = escapePromptContent(field.label, 80)
-        field.content = escapePromptContent(field.content, 2000)
-    }
-
-    return fields.map((f) => ({ label: f.label, value: f.content }))
+    return fields.map((f) => ({
+        label: escapePromptContent(f.label, 80),
+        value: escapePromptContent(f.content, 2000),
+    }))
 }
 
 function isReadOnlyTool(toolName: string): boolean {
@@ -899,11 +891,18 @@ function finalizeModelResponse(response: string): string {
         console.warn(`[AgentPipeline] Salida del modelo bloqueada: ${validation.reasons.join(", ")}`)
     }
 
-    let finalStr = validation.sanitized || SECURITY_REFUSAL_MESSAGE
-    
-    // Eliminar etiquetas XML que el modelo pequeño pueda alucinar (ej: <USER_RESPONSE>)
+    let finalStr: string
+    if (!validation.allowed) {
+        finalStr = validation.sanitized || SECURITY_REFUSAL_MESSAGE
+    } else if (!validation.sanitized || validation.sanitized.trim() === "") {
+        finalStr = "Disculpa, no genere una respuesta valida. ¿Podrias repetirme tu mensaje?"
+    } else {
+        finalStr = validation.sanitized
+    }
+
+    // Eliminar etiquetas XML que el modelo pueda alucinar (ej: <USER_RESPONSE>)
     finalStr = finalStr.replace(/<[^>]+>/g, "").trim()
-    
+
     // Eliminar asteriscos si envuelven absolutamente todo el mensaje
     finalStr = finalStr.replace(/^\*+([^*]+)\*+$/g, "$1").trim()
 
@@ -961,7 +960,7 @@ async function learnFromInteraction(
         const extractionPrompt = `Analiza esta interacción y extrae datos factuales e información personal DEL USUARIO.
 REGLAS IMPORTANTES:
 1. Extrae ÚNICAMENTE información que el usuario diga o confirme sobre sí mismo (su nombre, su empresa, sus gustos, sus necesidades).
-2. Ignora por completo cualquier dato del ASISTENTE, de su dueña/propietaria (ej. Yini) o del programador/propietario de la cuenta (ej. Camilo). NUNCA guardes datos del asistente o de Camilo como si fueran del usuario.
+2. Ignora por completo cualquier dato del ASISTENTE o de su propietario. NUNCA guardes datos del asistente como si fueran del usuario.
 3. Si el usuario pregunta cosas o el asistente responde con datos sobre sí mismo, IGNÓRALOS.
 4. Responde SOLO en formato JSON array. Cada elemento debe tener "key" (categoría corta) y "value" (dato concreto).
 Categorías válidas: nombre, telefono, empresa, cargo, preferencia, direccion, email, dato_clave.
@@ -977,7 +976,7 @@ Asistente: ${assistantResponse}
 JSON:`
 
         const response = await generateResponse([
-            { role: "system", content: "Extrae hechos factuales en formato JSON array. Solo hechos confirmados DEL USUARIO. Ignora datos del asistente o de su creador/dueño (Camilo). Responde SOLO el JSON, nada más." },
+            { role: "system", content: "Extrae hechos factuales en formato JSON array. Solo hechos confirmados DEL USUARIO. Ignora datos del asistente o de su propietario. Responde SOLO el JSON, nada mas." },
             { role: "user", content: extractionPrompt }
         ], {
             temperature: 0.1,
