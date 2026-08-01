@@ -213,6 +213,7 @@
     width: 100%;
     max-width: 640px;
     max-height: 90vh;
+    max-height: 90dvh;
     overflow-y: auto;
     animation: slideUp 0.3s ease-out;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);

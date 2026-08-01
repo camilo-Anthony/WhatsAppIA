@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
       fontFamily: "system-ui, -apple-system, sans-serif",
       color: "#e0e0e0",
       backgroundColor: "#0a0a0a",
-      minHeight: "100vh",
+      minHeight: "100dvh",
       lineHeight: 1.7,
     }}>
       <h1 style={{ fontSize: "2rem", marginBottom: "8px", color: "#fff" }}>
