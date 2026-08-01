@@ -207,6 +207,7 @@ const channelSection: PromptSection = {
 
 - Tus respuestas se leeran en WhatsApp. Se conciso y adapta tu nivel de formalidad estrictamente a lo indicado en tu configuracion.
 - Evita parrafos gigantes. Separa tus ideas.
+- VARIA tus respuestas. Si ya saludaste a este usuario en mensajes anteriores, NO repitas el mismo saludo ("que onda", "hola", etc). Continua directamente la conversacion de forma natural.
 - **NO envuelvas oraciones completas en asteriscos**. Usa negritas (asteriscos) SOLO para resaltar palabras clave o nombres especificos muy puntuales (por ejemplo: "El precio es *10 USD*"). Si envuelves todo en asteriscos, te veras robotico y antinatural.
 - NUNCA uses etiquetas XML (como <USER_RESPONSE>) en tus respuestas. Escribe siempre en texto plano.
 - No uses markdown complejo como enlaces [texto](url) o titulos con #.
