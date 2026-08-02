@@ -1107,7 +1107,7 @@ export default function AssistantBehaviorPage() {
                                     </div>
 
                                     {selectedGraphNode.properties?.description && (
-                                        <details open style={{ marginBottom: "4px" }}>
+                                        <details open className={styles.collapsibleSection} style={{ marginBottom: "4px" }}>
                                             <summary style={{ fontSize: "11px", fontWeight: "bold", color: "#9ca3af", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                                 Descripción
                                             </summary>
@@ -1118,7 +1118,7 @@ export default function AssistantBehaviorPage() {
                                     )}
 
                                     {Object.entries(selectedGraphNode.properties || {}).filter(([k]) => k !== "displayName" && k !== "description").length > 0 && (
-                                        <details open style={{ marginBottom: "4px" }}>
+                                        <details open className={styles.collapsibleSection} style={{ marginBottom: "4px" }}>
                                             <summary style={{ fontSize: "11px", fontWeight: "bold", color: "#9ca3af", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                                 Propiedades
                                             </summary>
@@ -1139,7 +1139,7 @@ export default function AssistantBehaviorPage() {
                                         </details>
                                     )}
 
-                                    <details open style={{ marginBottom: "4px" }}>
+                                    <details open className={styles.collapsibleSection} style={{ marginBottom: "4px" }}>
                                         <summary style={{ fontSize: "11px", fontWeight: "bold", color: "#9ca3af", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                             Conexiones ({selectedGraphNode.relationships?.length || 0})
                                         </summary>
@@ -1212,7 +1212,7 @@ export default function AssistantBehaviorPage() {
 
                         {cerebroTab === "identity" && (<>
                         {/* Identity */}
-                        <details open style={{ marginBottom: "4px" }}>
+                        <details open className={styles.collapsibleSection} style={{ marginBottom: "4px" }}>
                             <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Identidad del Agente
                             </summary>
@@ -1229,7 +1229,7 @@ export default function AssistantBehaviorPage() {
                         </details>
 
                         {/* Mission */}
-                        <details open style={{ marginBottom: "4px" }}>
+                        <details open className={styles.collapsibleSection} style={{ marginBottom: "4px" }}>
                             <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Misión Principal
                             </summary>
@@ -1247,7 +1247,7 @@ export default function AssistantBehaviorPage() {
 
                         {cerebroTab === "style" && (<>
                         {/* Tone & Style */}
-                        <details open style={{ marginBottom: "4px" }}>
+                        <details open className={styles.collapsibleSection} style={{ marginBottom: "4px" }}>
                             <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Estilo de Respuesta
                             </summary>
@@ -1265,7 +1265,7 @@ export default function AssistantBehaviorPage() {
 
                         {cerebroTab === "limits" && (<>
                         {/* Constraints */}
-                        <details open style={{ marginBottom: "4px" }}>
+                        <details open className={styles.collapsibleSection} style={{ marginBottom: "4px" }}>
                             <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Límites Estrictos
                             </summary>

@@ -1191,6 +1191,29 @@
     display: none;
 }
 
+/* Collapsible sections in Brain 3D sidebar + Agent drawer */
+.collapsibleSection > summary {
+    list-style: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.collapsibleSection > summary::-webkit-details-marker {
+    display: none;
+}
+
+.collapsibleSection > summary::before {
+    content: "▸";
+    font-size: 10px;
+    transition: transform 0.15s ease;
+}
+
+.collapsibleSection[open] > summary::before {
+    transform: rotate(90deg);
+}
+
 /* Token usage summary */
 .tokenSummary {
     background: rgba(0, 0, 0, 0.2);
