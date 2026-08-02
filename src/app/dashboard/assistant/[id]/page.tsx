@@ -1297,6 +1297,7 @@ export default function AssistantBehaviorPage() {
                                 </div>
                             </details>
                         </div>
+                        </details>
                         </>)}
                     </div>
                 )}
