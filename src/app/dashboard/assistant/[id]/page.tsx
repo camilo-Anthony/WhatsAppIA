@@ -1107,31 +1107,43 @@ export default function AssistantBehaviorPage() {
                                     </div>
 
                                     {selectedGraphNode.properties?.description && (
-                                        <div className={styles.obsidianSidebarDesc}>
-                                            {selectedGraphNode.properties.description}
-                                        </div>
+                                        <details open style={{ marginBottom: "4px" }}>
+                                            <summary style={{ fontSize: "11px", fontWeight: "bold", color: "#9ca3af", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
+                                                Descripción
+                                            </summary>
+                                            <div className={styles.obsidianSidebarDesc} style={{ marginTop: "6px" }}>
+                                                {selectedGraphNode.properties.description}
+                                            </div>
+                                        </details>
                                     )}
 
                                     {Object.entries(selectedGraphNode.properties || {}).filter(([k]) => k !== "displayName" && k !== "description").length > 0 && (
-                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "rgba(255, 255, 255, 0.02)", padding: "12px", borderRadius: "8px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                                            {Object.entries(selectedGraphNode.properties || {})
-                                                .filter(([k]) => k !== "displayName" && k !== "description")
-                                                .map(([key, val]) => (
-                                                    <div key={key} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                                                        <span style={{ fontSize: "10px", color: "#9ca3af", fontWeight: 500 }}>
-                                                            {translatePropKey(key)}
-                                                        </span>
-                                                        <span style={{ fontSize: "12px", color: "#f3f4f6", fontWeight: 600 }}>
-                                                            {formatPropValue(key, val)}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                        </div>
+                                        <details open style={{ marginBottom: "4px" }}>
+                                            <summary style={{ fontSize: "11px", fontWeight: "bold", color: "#9ca3af", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
+                                                Propiedades
+                                            </summary>
+                                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "rgba(255, 255, 255, 0.02)", padding: "12px", borderRadius: "8px", border: "1px solid rgba(255, 255, 255, 0.05)", marginTop: "6px" }}>
+                                                {Object.entries(selectedGraphNode.properties || {})
+                                                    .filter(([k]) => k !== "displayName" && k !== "description")
+                                                    .map(([key, val]) => (
+                                                        <div key={key} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                                            <span style={{ fontSize: "10px", color: "#9ca3af", fontWeight: 500 }}>
+                                                                {translatePropKey(key)}
+                                                            </span>
+                                                            <span style={{ fontSize: "12px", color: "#f3f4f6", fontWeight: 600 }}>
+                                                                {formatPropValue(key, val)}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </details>
                                     )}
 
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                                        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#9ca3af" }}>Conexiones ({selectedGraphNode.relationships?.length || 0})</span>
-                                        <div className={styles.obsidianRelationsList}>
+                                    <details open style={{ marginBottom: "4px" }}>
+                                        <summary style={{ fontSize: "11px", fontWeight: "bold", color: "#9ca3af", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
+                                            Conexiones ({selectedGraphNode.relationships?.length || 0})
+                                        </summary>
+                                        <div className={styles.obsidianRelationsList} style={{ marginTop: "6px" }}>
                                             {selectedGraphNode.relationships.map((rel, idx) => (
                                                 <div key={idx} className={styles.obsidianRelationItem}>
                                                     <div className={styles.obsidianRelationHeader}>
@@ -1146,7 +1158,7 @@ export default function AssistantBehaviorPage() {
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+                                    </details>
                                 </div>
                             ) : (
                                 <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center", color: "#6b7280", fontSize: "var(--font-size-xs)", textAlign: "center" }}>
@@ -1200,78 +1212,85 @@ export default function AssistantBehaviorPage() {
 
                         {cerebroTab === "identity" && (<>
                         {/* Identity */}
-                        <div className={styles.behaviorFieldGroup} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                            <label style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)" }}>
+                        <details open style={{ marginBottom: "4px" }}>
+                            <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Identidad del Agente
-                            </label>
-                            <input
-                                type="text"
-                                className="input"
-                                value={behaviorConfig.agentIdentity ?? ""}
-                                onChange={(e) => updateBehaviorAnswers({ agentIdentity: e.target.value })}
-                                placeholder="Ej. Ana de Soporte, Dr. Martinez"
-                                style={{ padding: "6px 10px", fontSize: "var(--font-size-sm)", background: "rgba(0,0,0,0.2)" }}
-                            />
-                        </div>
+                            </summary>
+                            <div style={{ marginTop: "6px" }}>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={behaviorConfig.agentIdentity ?? ""}
+                                    onChange={(e) => updateBehaviorAnswers({ agentIdentity: e.target.value })}
+                                    placeholder="Ej. Ana de Soporte, Dr. Martinez"
+                                    style={{ padding: "6px 10px", fontSize: "var(--font-size-sm)", background: "rgba(0,0,0,0.2)" }}
+                                />
+                            </div>
+                        </details>
 
                         {/* Mission */}
-                        <div className={styles.behaviorFieldGroup} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                            <label style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)" }}>
+                        <details open style={{ marginBottom: "4px" }}>
+                            <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Misión Principal
-                            </label>
-                            <textarea
-                                className="input textarea"
-                                style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
-                                value={behaviorConfig.mission ?? ""}
-                                onChange={(e) => updateBehaviorAnswers({ mission: e.target.value })}
-                                placeholder="¿Cuál es la misión principal del agente?"
-                            />
-                        </div>
+                            </summary>
+                            <div style={{ marginTop: "6px" }}>
+                                <textarea
+                                    className="input textarea"
+                                    style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
+                                    value={behaviorConfig.mission ?? ""}
+                                    onChange={(e) => updateBehaviorAnswers({ mission: e.target.value })}
+                                    placeholder="¿Cuál es la misión principal del agente?"
+                                />
+                            </div>
+                        </details>
                         </>)}
 
                         {cerebroTab === "style" && (<>
                         {/* Tone & Style */}
-                        <div className={styles.behaviorFieldGroup} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                            <label style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)" }}>
+                        <details open style={{ marginBottom: "4px" }}>
+                            <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Estilo de Respuesta
-                            </label>
-                            <textarea
-                                className="input textarea"
-                                style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
-                                value={behaviorConfig.toneAndFormat ?? ""}
-                                onChange={(e) => updateBehaviorAnswers({ toneAndFormat: e.target.value })}
-                                placeholder="Ej. Habla de tú, responde corto y usa emojis."
-                            />
-                        </div>
+                            </summary>
+                            <div style={{ marginTop: "6px" }}>
+                                <textarea
+                                    className="input textarea"
+                                    style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
+                                    value={behaviorConfig.toneAndFormat ?? ""}
+                                    onChange={(e) => updateBehaviorAnswers({ toneAndFormat: e.target.value })}
+                                    placeholder="Ej. Habla de tú, responde corto y usa emojis."
+                                />
+                            </div>
+                        </details>
                         </>)}
 
                         {cerebroTab === "limits" && (<>
                         {/* Constraints */}
-                        <div className={styles.behaviorFieldGroup} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                            <label style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)" }}>
+                        <details open style={{ marginBottom: "4px" }}>
+                            <summary style={{ fontSize: "var(--font-size-sm)", fontWeight: 600, color: "var(--color-text-secondary)", cursor: "pointer", userSelect: "none", padding: "4px 0" }}>
                                 Límites Estrictos
-                            </label>
-                            <textarea
-                                className="input textarea"
-                                style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
-                                value={behaviorConfig.strictConstraints ?? ""}
-                                onChange={(e) => updateBehaviorAnswers({ strictConstraints: e.target.value })}
-                                placeholder="Reglas inviolables (una por línea)..."
-                            />
-                            <details style={{ marginTop: "4px" }}>
-                                <summary style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", cursor: "pointer", userSelect: "none" }}>
-                                    Ver sugerencias de límites rápidos
-                                </summary>
-                                <div className={styles.constraintChips} style={{ marginTop: "6px", display: "flex", flexWrap: "wrap", gap: "4px", maxHeight: "110px", overflowY: "auto", paddingRight: "4px" }}>
-                                    {CONSTRAINT_SUGGESTIONS.map((c) => (
-                                        <button
-                                            key={c}
-                                            type="button"
-                                            className={`${styles.constraintChip} ${isConstraintActive(c) ? styles.constraintChipActive : ""}`}
-                                            onClick={() => toggleConstraint(c)}
-                                            style={{ fontSize: "var(--font-size-xs)", padding: "3px 6px", display: "inline-flex", alignItems: "center", gap: "2px" }}
-                                        >
-                                            {isConstraintActive(c) && <X size={10} />}
+                            </summary>
+                            <div style={{ marginTop: "6px" }}>
+                                <textarea
+                                    className="input textarea"
+                                    style={{ minHeight: "70px", resize: "vertical", fontSize: "var(--font-size-sm)", padding: "6px 10px", background: "rgba(0,0,0,0.2)" }}
+                                    value={behaviorConfig.strictConstraints ?? ""}
+                                    onChange={(e) => updateBehaviorAnswers({ strictConstraints: e.target.value })}
+                                    placeholder="Reglas inviolables (una por línea)..."
+                                />
+                                <details style={{ marginTop: "4px" }}>
+                                    <summary style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", cursor: "pointer", userSelect: "none" }}>
+                                        Ver sugerencias de límites rápidos
+                                    </summary>
+                                    <div className={styles.constraintChips} style={{ marginTop: "6px", display: "flex", flexWrap: "wrap", gap: "4px", maxHeight: "110px", overflowY: "auto", paddingRight: "4px" }}>
+                                        {CONSTRAINT_SUGGESTIONS.map((c) => (
+                                            <button
+                                                key={c}
+                                                type="button"
+                                                className={`${styles.constraintChip} ${isConstraintActive(c) ? styles.constraintChipActive : ""}`}
+                                                onClick={() => toggleConstraint(c)}
+                                                style={{ fontSize: "var(--font-size-xs)", padding: "3px 6px", display: "inline-flex", alignItems: "center", gap: "2px" }}
+                                            >
+                                                {isConstraintActive(c) && <X size={10} />}
                                             {c}
                                         </button>
                                     ))}
