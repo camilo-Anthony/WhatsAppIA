@@ -1204,10 +1204,15 @@
     display: none;
 }
 
+.collapsibleSection > summary::marker {
+    content: "";
+}
+
 .collapsibleSection > summary::before {
     content: "▸";
     font-size: 10px;
     transition: transform 0.15s ease;
+    display: inline-block;
 }
 
 .collapsibleSection[open] > summary::before {
