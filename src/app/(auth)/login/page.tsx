@@ -107,6 +107,9 @@ export default function LoginPage() {
                 </form>
 
                 <p className={styles.footer}>
+                    <Link href="/forgot-password" style={{ display: "block", marginBottom: "var(--space-2)", fontSize: "var(--font-size-sm)" }}>
+                        ¿Olvidaste tu contraseña?
+                    </Link>
                     ¿No tienes cuenta?{" "}
                     <Link href="/register">Crear cuenta</Link>
                 </p>
