@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "WhatsAppAgent - Automatización Inteligente",
-  description: "Responde mensajes, recuerda información y gestiona solicitudes en tu WhatsApp de forma automática. Automatiza tus conversaciones sin perder el toque personal.",
+  description: "Automatiza tu WhatsApp con IA: personaliza su tono, enséñale tu conocimiento y deja que responda, recuerde y actúe por ti.",
   keywords: ["whatsapp", "ia", "chatbot", "automatización", "inteligencia artificial"],
   verification: {
     google: "hc6sjoumMcnj6eMeJZqKMZWMNfYQhTSJB6t0QThmr9o",
