@@ -49,19 +49,10 @@ export async function POST(request: Request) {
         const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || ""
         const resetLink = `${baseUrl}/reset-password?token=${token}`
 
-        // TODO: Enviar email cuando este configurado SMTP/Resend
-        // Por ahora devolvemos el link en la respuesta (modo demo)
-        if (process.env.NODE_ENV === "production" && baseUrl) {
-            // En produccion, no devolver el link directamente
-            // Aqui se enviaria el email con nodemailer/resend
-            return NextResponse.json(
-                { message: "Si el email existe, recibirás un enlace de recuperación" },
-                { status: 200 }
-            )
-        }
-
+        // Enviar link en respuesta (sin SMTP configurado aun)
+        // Si se configura SMTP/Resend, descomentar y quitar el resetLink del response
         return NextResponse.json(
-            { message: "Enlace generado", resetLink },
+            { message: "Enlace de recuperacion generado", resetLink },
             { status: 200 }
         )
     } catch (error) {
