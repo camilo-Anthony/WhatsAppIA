@@ -1742,13 +1742,36 @@
     overflow-y: auto;
 }
 
-.obsidianSidebarTitle {
+.obsidianSidebarToggle {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: var(--font-size-sm);
     font-weight: 700;
     color: #e5e7eb;
-    margin: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    user-select: none;
     padding-bottom: var(--space-2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.obsidianSidebarToggle::before {
+    content: "▸";
+    font-size: 10px;
+    color: #9ca3af;
+    transition: transform 0.15s ease;
+    display: inline-block;
+}
+
+.obsidianSidebarToggle:hover {
+    color: #ffffff;
+}
+
+.obsidianSidebarToggleOpen::before {
+    transform: rotate(90deg);
 }
 
 .obsidianSidebarMeta {

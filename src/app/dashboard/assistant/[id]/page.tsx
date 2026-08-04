@@ -371,6 +371,7 @@ export default function AssistantBehaviorPage() {
     const [graphData, setGraphData] = useState<GraphData | null>(null)
     const [graphSearchQuery, setGraphSearchQuery] = useState("")
     const [selectedGraphNode, setSelectedGraphNode] = useState<SelectedGraphNode | null>(null)
+    const [graphDetailsOpen, setGraphDetailsOpen] = useState(true)
 
     const safeBehaviorConfig = normalizeStructuredDashboardConfig(behaviorConfig)
 
@@ -1087,10 +1088,17 @@ export default function AssistantBehaviorPage() {
                             )}
                         </div>
 
-                        <div className={styles.obsidianSidebar} style={{ width: "300px", borderLeft: "1px solid var(--color-border)", background: "var(--color-bg-primary)" }}>
-                            <h4 className={styles.obsidianSidebarTitle}>Detalles de Entidad</h4>
+                        <div className={styles.obsidianSidebar} style={{ width: graphDetailsOpen ? "300px" : "44px", borderLeft: "1px solid var(--color-border)", background: "var(--color-bg-primary)" }}>
+                            <button
+                                type="button"
+                                className={`${styles.obsidianSidebarToggle} ${graphDetailsOpen ? styles.obsidianSidebarToggleOpen : ""}`}
+                                onClick={() => setGraphDetailsOpen(!graphDetailsOpen)}
+                                title={graphDetailsOpen ? "Colapsar panel de detalles" : "Expandir panel de detalles"}
+                            >
+                                {graphDetailsOpen && "Detalles de Entidad"}
+                            </button>
 
-                            {selectedGraphNode ? (
+                            {graphDetailsOpen && (selectedGraphNode ? (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
                                     <div>
                                         <span style={{ fontSize: "10px", textTransform: "uppercase", fontWeight: "bold", padding: "2px 6px", borderRadius: "4px", background: getNodeColor(selectedGraphNode.labels?.[0] || ""), color: "#000" }}>
@@ -1164,20 +1172,22 @@ export default function AssistantBehaviorPage() {
                                 <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center", color: "#6b7280", fontSize: "var(--font-size-xs)", textAlign: "center" }}>
                                     Haz clic en cualquier nodo del grafo para ver sus detalles y relaciones conexas.
                                 </div>
-                            )}
+                            ))}
 
-                            <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.05)", paddingTop: "var(--space-3)", marginTop: "auto" }}>
-                                <div className={styles.obsidianSidebarMeta}>
-                                    <div className={styles.obsidianSidebarMetaItem}>
-                                        <span>Total Entidades:</span>
-                                        <span style={{ color: "#f3f4f6", fontWeight: "bold" }}>{graphData?.nodes?.length || 0}</span>
-                                    </div>
-                                    <div className={styles.obsidianSidebarMetaItem}>
-                                        <span>Relaciones:</span>
-                                        <span style={{ color: "#f3f4f6", fontWeight: "bold" }}>{graphData?.edges?.length || 0}</span>
+                            {graphDetailsOpen && (
+                                <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.05)", paddingTop: "var(--space-3)", marginTop: "auto" }}>
+                                    <div className={styles.obsidianSidebarMeta}>
+                                        <div className={styles.obsidianSidebarMetaItem}>
+                                            <span>Total Entidades:</span>
+                                            <span style={{ color: "#f3f4f6", fontWeight: "bold" }}>{graphData?.nodes?.length || 0}</span>
+                                        </div>
+                                        <div className={styles.obsidianSidebarMetaItem}>
+                                            <span>Relaciones:</span>
+                                            <span style={{ color: "#f3f4f6", fontWeight: "bold" }}>{graphData?.edges?.length || 0}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 )}
